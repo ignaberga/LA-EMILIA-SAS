@@ -16,7 +16,8 @@ informes contables y de gestión.
 
 - **Daniel** (hermano): carga movimientos. Tiene **iPhone**.
 - **Javier** (papá): carga movimientos. Tiene **Android**.
-- **Ignacio**: también la tiene en el celular. Revisa los datos y la planilla.
+- **Ignacio**: también la tiene en el celular. Revisa los datos y la planilla, y
+  también carga movimientos.
 
 Son tres teléfonos. Ninguno de los tres programa: hay que pensar cada cambio para
 alguien que usa el celular en el campo, con poca señal y poca paciencia. Menos
@@ -75,8 +76,12 @@ pasos es mejor.
   desvincula nunca (en iPhone, Safari y el ícono guardan datos por separado).
   No borrar el `#…` de la dirección ni agregar un manifest con `start_url`,
   porque se perdería.
-- Cada teléfono recuerda quién lo usa (`la_emilia_persona`: `Daniel`, `Javier`
-  o `preguntar`) y no lo vuelve a preguntar al cargar.
+- Personas que cargan: `Daniel`, `Javier` e `Ignacio` (constante `PEOPLE`).
+  Cada teléfono recuerda quién lo usa (`la_emilia_persona`: una de ellas o
+  `preguntar`) y no lo vuelve a preguntar al cargar.
+- Los links de instalación **no se generan dentro de la app** (Ignacio no quiere
+  alargar Config): se los arma Claude en el chat cuando Ignacio pasa la
+  dirección `/exec`, y nunca se guardan en el repo.
 - Listas configurables: categorías de ingreso y gasto, clientes, proveedores,
   unidades y formas de pago.
 
@@ -113,3 +118,5 @@ pasos es mejor.
   persona fija por celular, la confirmación al borrar y las tildes. Se sacó
   "Sincronizar todo". Se corrigieron los nombres cruzados: en el código
   quedaron `daniel`/`javier` (antes `hermano`/`padre` estaban invertidos).
+- Se agregó a Ignacio como persona que carga y se sacaron de Config los botones
+  para compartir links de instalación.

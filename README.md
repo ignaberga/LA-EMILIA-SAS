@@ -1,6 +1,6 @@
 # La Emilia — ingresos y gastos del campo
 
-App para que Daniel y Javier carguen los movimientos del campo desde el celular.
+App para que Daniel, Javier e Ignacio carguen los movimientos del campo desde el celular.
 Es un solo archivo, `index.html`, sin instalación ni servidor.
 
 **Dirección de la app:** https://ignaberga.github.io/LA-EMILIA-SAS/
@@ -25,9 +25,13 @@ Se comparte por mensaje directo, no se publica en ningún lado.
 
 ## Instalar en el celular (una sola vez)
 
-1. Desde un celular ya conectado, entrar a **Config → Planilla de Google** y
-   tocar **Compartir link de instalación para Daniel** (o para Javier).
-   Mandarlo por WhatsApp.
+1. Ignacio le manda a cada uno su **link de instalación** por WhatsApp. Tiene
+   esta forma (la dirección `/exec` va pegada tal cual, y al final el nombre:
+   `Daniel`, `Javier` o `Ignacio`):
+
+   `https://ignaberga.github.io/LA-EMILIA-SAS/#vincular=<dirección /exec>&quien=Daniel`
+
+   Ese link lleva adentro la llave de la planilla: solo por mensaje directo.
 2. La persona abre ese link y, **desde esa misma página**, agrega la app a la
    pantalla de inicio:
    - **iPhone:** en Safari, Compartir → Agregar a inicio. Si el link se abrió

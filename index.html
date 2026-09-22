@@ -26,6 +26,8 @@
     --tag-javier-bg: #E3EBF2;
     --tag-daniel: #7A7A3E;
     --tag-daniel-bg: #EFEFD9;
+    --tag-ignacio: #6E5283;
+    --tag-ignacio-bg: #EDE6F2;
     --radius: 14px;
   }
   * { box-sizing: border-box; }
@@ -171,6 +173,7 @@
   }
   .tag.javier { background: var(--tag-javier-bg); color: var(--tag-javier); }
   .tag.daniel { background: var(--tag-daniel-bg); color: var(--tag-daniel); }
+  .tag.ignacio { background: var(--tag-ignacio-bg); color: var(--tag-ignacio); }
   .tag.otro { background: var(--bg); color: var(--ink-soft); }
   .move-item .note { font-size: 12px; color: var(--ink-soft); }
   .move-item .right { display: flex; align-items: center; gap: 10px; }
@@ -419,11 +422,6 @@
     margin-bottom: 10px; font-family: inherit;
   }
   .help-text { font-size: 13px; color: var(--ink-soft); margin-bottom: 12px; line-height: 1.4; }
-  .share-out {
-    width: 100%; font-size: 12px; padding: 10px; border-radius: 10px;
-    border: 1px solid var(--line); background: var(--bg); color: var(--ink);
-    font-family: inherit; resize: none; min-height: 70px; display: none; margin-bottom: 10px;
-  }
   .who-modal .person-toggle { flex-direction: column; }
   .hist-filters {
     display: grid;
@@ -498,9 +496,10 @@
         <option value="">Todos los proveedores/clientes</option>
       </select>
       <select id="filterPerson">
-        <option value="">Daniel y Javier</option>
+        <option value="">Todas las personas</option>
         <option value="Daniel">Solo Daniel</option>
         <option value="Javier">Solo Javier</option>
+        <option value="Ignacio">Solo Ignacio</option>
       </select>
     </div>
     <div class="balance-card" style="margin:0 20px 16px;">
@@ -615,6 +614,7 @@
         <select id="phoneOwner">
           <option value="Daniel">Daniel</option>
           <option value="Javier">Javier</option>
+          <option value="Ignacio">Ignacio</option>
           <option value="preguntar">Preguntar cada vez</option>
         </select>
       </div>
@@ -623,16 +623,6 @@
       <div class="section-title">Planilla de Google</div>
       <div class="link-state" id="linkState"></div>
       <div class="help-text" id="lastSyncText"></div>
-      <div class="help-text">
-        Para dejar vinculado el celular de Daniel o de Javier, mandale su link de instalación por WhatsApp. Lo abre, agrega la app a la pantalla de inicio desde esa misma página y queda vinculado para siempre, sin pegar nada.
-      </div>
-      <button class="btn-main" id="shareDaniel">Compartir link de instalación para Daniel</button>
-      <button class="btn-main" id="shareJavier">Compartir link de instalación para Javier</button>
-      <button class="btn-outline" id="shareAsk">Compartir link que pregunta quién carga</button>
-      <textarea class="share-out" id="shareOut" readonly></textarea>
-      <div class="help-text" style="margin-top:6px;">
-        Ese link lleva adentro la llave de la planilla: mandalo solo por mensaje directo, nunca lo publiques.
-      </div>
       <div class="help-text" style="margin-top:14px;">
         Vincular a mano: pegá acá la dirección de la aplicación web de Apps Script (la que termina en /exec).
       </div>
@@ -666,6 +656,7 @@
         <div class="person-toggle">
           <button type="button" data-person="Daniel" id="pDaniel">Daniel</button>
           <button type="button" data-person="Javier" id="pJavier">Javier</button>
+          <button type="button" data-person="Ignacio" id="pIgnacio">Ignacio</button>
         </div>
       </div>
       <div class="help-text" id="personFixed"></div>
@@ -729,6 +720,7 @@
       <div class="person-toggle">
         <button type="button" data-who="Daniel">Daniel</button>
         <button type="button" data-who="Javier">Javier</button>
+        <button type="button" data-who="Ignacio">Ignacio</button>
         <button type="button" data-who="preguntar">Otra persona (preguntar cada vez)</button>
       </div>
     </div>
@@ -755,6 +747,7 @@ let CLIENTS = [];
 // instalacion (#vincular=...&quien=...). Ese link queda grabado en el icono
 // de la pantalla de inicio, asi el celular no se desvincula aunque el
 // navegador borre sus datos. La direccion nunca va en este repositorio.
+const PEOPLE = ["Daniel", "Javier", "Ignacio"];
 const SHEET_URL_KEY = "la_emilia_sheet_url";
 const PERSON_KEY = "la_emilia_persona";
 const LAST_SYNC_KEY = "la_emilia_ultima_sync";
@@ -779,7 +772,7 @@ function readInstallLink() {
   // La persona del link solo se toma la primera vez: si despues se cambia
   // en Config, manda lo elegido en Config.
   const quien = params.get("quien");
-  if (!phoneOwner && (quien === "Daniel" || quien === "Javier" || quien === "preguntar")) {
+  if (!phoneOwner && (PEOPLE.includes(quien) || quien === "preguntar")) {
     phoneOwner = quien;
     try { localStorage.setItem(PERSON_KEY, phoneOwner); } catch (e) {}
   }
@@ -1339,7 +1332,7 @@ function renderBalance(list) {
 function moveItemHtml(m) {
   const sign = m.type === "ingreso" ? "+" : "-";
   const cls = m.type === "ingreso" ? "in" : "out";
-  const personCls = m.person === "Daniel" ? "daniel" : (m.person === "Javier" ? "javier" : "otro");
+  const personCls = PEOPLE.includes(m.person) ? m.person.toLowerCase() : "otro";
   const note = m.note ? '<div class="note">' + escapeHtml(m.note) + '</div>' : "";
   const provider = m.provider ? '<div class="note">Proveedor: ' + escapeHtml(m.provider) + '</div>' : "";
   const client = m.client ? '<div class="note">Cliente: ' + escapeHtml(m.client) + '</div>' : "";
@@ -1581,7 +1574,7 @@ function openModal(type) {
   document.getElementById("gastoExtraA").style.display = type === "gasto" ? "block" : "none";
   document.getElementById("gastoExtraB").style.display = type === "gasto" ? "block" : "none";
   document.getElementById("formErr").style.display = "none";
-  const fixed = phoneOwner === "Daniel" || phoneOwner === "Javier";
+  const fixed = PEOPLE.includes(phoneOwner);
   document.getElementById("personField").style.display = fixed ? "none" : "block";
   const personFixed = document.getElementById("personFixed");
   personFixed.style.display = fixed ? "block" : "none";
@@ -1596,12 +1589,10 @@ function closeModal() {
 
 function selectPerson(p) {
   selectedPerson = p;
-  document.getElementById("pDaniel").classList.toggle("sel", p === "Daniel");
-  document.getElementById("pJavier").classList.toggle("sel", p === "Javier");
+  PEOPLE.forEach(name => document.getElementById("p" + name).classList.toggle("sel", p === name));
 }
 
-document.getElementById("pDaniel").addEventListener("click", () => selectPerson("Daniel"));
-document.getElementById("pJavier").addEventListener("click", () => selectPerson("Javier"));
+PEOPLE.forEach(name => document.getElementById("p" + name).addEventListener("click", () => selectPerson(name)));
 
 function setPhoneOwner(v) {
   phoneOwner = v;
@@ -1697,42 +1688,6 @@ document.getElementById("saveSheetUrl").addEventListener("click", () => {
   syncNow();
 });
 
-function installLink(quien) {
-  return location.origin + location.pathname + "#vincular=" + encodeURIComponent(sheetUrl) + "&quien=" + quien;
-}
-
-async function shareInstallLink(quien) {
-  if (!sheetUrl) {
-    setSheetStatus("Primero conectá este celular con la planilla.");
-    return;
-  }
-  const link = installLink(quien);
-  const saludo = quien === "preguntar" ? "Hola" : "Hola " + quien;
-  const text = saludo + ": abrí este link y, desde esa misma página, agregá La Emilia a la pantalla de inicio. Así queda conectada a la planilla para siempre.";
-  if (navigator.share) {
-    try {
-      await navigator.share({ title: "La Emilia", text: text, url: link });
-      return;
-    } catch (e) {
-      if (e && e.name === "AbortError") return;
-    }
-  }
-  const out = document.getElementById("shareOut");
-  out.value = text + "\n" + link;
-  out.style.display = "block";
-  try {
-    await navigator.clipboard.writeText(out.value);
-    setSheetStatus("Se copió el mensaje con el link. Pegalo en el chat de WhatsApp.");
-  } catch (e) {
-    out.select();
-    setSheetStatus("Copiá el texto de arriba y mandalo por WhatsApp.");
-  }
-}
-
-document.getElementById("shareDaniel").addEventListener("click", () => shareInstallLink("Daniel"));
-document.getElementById("shareJavier").addEventListener("click", () => shareInstallLink("Javier"));
-document.getElementById("shareAsk").addEventListener("click", () => shareInstallLink("preguntar"));
-
 document.getElementById("downloadBackup").addEventListener("click", () => {
   const backup = {
     exportadoEl: new Date().toISOString(),
@@ -1768,7 +1723,7 @@ document.getElementById("saveBtn").addEventListener("click", async () => {
     errEl.style.display = "block";
     return;
   }
-  if (selectedPerson !== "Daniel" && selectedPerson !== "Javier") {
+  if (!PEOPLE.includes(selectedPerson)) {
     errEl.textContent = "Elegí quién carga esto.";
     errEl.style.display = "block";
     return;
