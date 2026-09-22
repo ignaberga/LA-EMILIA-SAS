@@ -1,0 +1,1488 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="La Emilia">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#EEF1E6">
+<title>La Emilia</title>
+<style>
+  :root {
+    --bg: #EEF1E6;
+    --surface: #FFFFFF;
+    --line: #D9DBC9;
+    --ink: #223423;
+    --ink-soft: #5B6B57;
+    --pine: #3F6B4A;
+    --pine-dark: #2A4A32;
+    --gold: #B8842A;
+    --gold-bg: #F6ECD6;
+    --rust: #A14B33;
+    --rust-bg: #F5E4DD;
+    --tag-padre: #4C6B8A;
+    --tag-padre-bg: #E3EBF2;
+    --tag-hermano: #7A7A3E;
+    --tag-hermano-bg: #EFEFD9;
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #app {
+    max-width: 480px;
+    margin: 0 auto;
+    min-height: 100vh;
+    padding-bottom: 84px;
+    position: relative;
+  }
+  header {
+    padding: calc(22px + env(safe-area-inset-top, 0px)) 20px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .brand {
+    display: flex;
+    flex-direction: column;
+  }
+  .brand .name {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    color: var(--pine-dark);
+  }
+  .brand .sub {
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin-top: 2px;
+  }
+  .month-nav {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 20px 16px;
+  }
+  .month-nav button {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    font-size: 16px;
+    color: var(--pine-dark);
+  }
+  .month-nav .month-label {
+    flex: 1;
+    text-align: center;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--ink);
+    text-transform: capitalize;
+  }
+  .balance-card {
+    margin: 0 20px 16px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+  }
+  .balance-card .label {
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin-bottom: 4px;
+  }
+  .balance-card .amount {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--pine-dark);
+    line-height: 1.1;
+  }
+  .balance-card .amount.negative { color: var(--rust); }
+  .balance-row {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--line);
+  }
+  .balance-row .col { flex: 1; }
+  .balance-row .col .l { font-size: 12px; color: var(--ink-soft); }
+  .balance-row .col .v { font-size: 17px; font-weight: 600; margin-top: 2px; }
+  .balance-row .col.in .v { color: var(--gold); }
+  .balance-row .col.out .v { color: var(--rust); }
+  .actions {
+    display: flex;
+    gap: 12px;
+    margin: 0 20px 22px;
+  }
+  .actions button {
+    flex: 1;
+    padding: 16px 0;
+    border-radius: var(--radius);
+    border: none;
+    font-size: 16px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .btn-in { background: var(--gold-bg); color: var(--gold); }
+  .btn-out { background: var(--rust-bg); color: var(--rust); }
+  .actions button .plus { font-size: 20px; line-height: 1; }
+  .section-title {
+    padding: 0 20px 10px;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--ink);
+  }
+  .movements { padding: 0 20px; display: flex; flex-direction: column; gap: 10px; }
+  .day-group .day-label {
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin: 14px 0 6px;
+    font-weight: 600;
+  }
+  .move-item {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .move-item .left { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .move-item .cat { font-size: 15px; font-weight: 600; color: var(--ink); }
+  .move-item .tags { display: flex; gap: 6px; align-items: center; }
+  .tag {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 20px;
+  }
+  .tag.padre { background: var(--tag-padre-bg); color: var(--tag-padre); }
+  .tag.hermano { background: var(--tag-hermano-bg); color: var(--tag-hermano); }
+  .move-item .note { font-size: 12px; color: var(--ink-soft); }
+  .move-item .right { display: flex; align-items: center; gap: 10px; }
+  .move-item .amt { font-size: 16px; font-weight: 700; white-space: nowrap; }
+  .amt.in { color: var(--gold); }
+  .amt.out { color: var(--rust); }
+  .del-btn {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    border: none;
+    background: var(--bg);
+    color: var(--ink-soft);
+    font-size: 14px;
+  }
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--ink-soft);
+    font-size: 14px;
+  }
+  .empty-state .big { font-size: 34px; margin-bottom: 8px; }
+  nav.tabbar {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    max-width: 480px;
+    margin: 0 auto;
+    background: var(--surface);
+    border-top: 1px solid var(--line);
+    display: flex;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  nav.tabbar button {
+    flex: 1;
+    border: none;
+    background: none;
+    padding: 12px 0 14px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink-soft);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  nav.tabbar button .ic { font-size: 19px; }
+  nav.tabbar button.active { color: var(--pine-dark); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+  .summary-cat {
+    padding: 0 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .summary-group-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--ink-soft);
+    margin: 6px 0 -2px;
+  }
+  .bar-row { }
+  .bar-row .bar-top { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 6px; }
+  .bar-row .bar-top .name { color: var(--ink); font-weight: 500; }
+  .bar-row .bar-top .val { font-weight: 700; }
+  .bar-track {
+    background: var(--bg);
+    border-radius: 8px;
+    height: 8px;
+    overflow: hidden;
+  }
+  .bar-fill { height: 100%; border-radius: 8px; }
+  .bar-fill.in { background: var(--gold); }
+  .bar-fill.out { background: var(--rust); }
+
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(34,52,35,0.45);
+    z-index: 50;
+    align-items: flex-end;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal-sheet {
+    background: var(--surface);
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+    border-radius: 20px 20px 0 0;
+    padding: 22px 20px 26px;
+    max-height: 88vh;
+    overflow-y: auto;
+  }
+  .modal-sheet h2 {
+    margin: 0 0 16px;
+    font-size: 19px;
+    font-weight: 700;
+  }
+  .modal-sheet h2.in { color: var(--gold); }
+  .modal-sheet h2.out { color: var(--rust); }
+  .field { margin-bottom: 16px; }
+  .field label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink-soft);
+    margin-bottom: 6px;
+  }
+  .field select, .field input, .field textarea {
+    width: 100%;
+    padding: 13px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    font-size: 16px;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: inherit;
+  }
+  .field textarea { resize: none; min-height: 60px; }
+  .field input[type="file"] { padding: 8px 0; border: none; background: none; font-size: 14px; }
+  .move-thumb { width: 40px; height: 40px; object-fit: cover; border-radius: 8px; margin-top: 6px; border: 1px solid var(--line); }
+  .person-toggle { display: flex; gap: 10px; }
+  .person-toggle button {
+    flex: 1;
+    padding: 13px 0;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    background: var(--bg);
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ink-soft);
+  }
+  .person-toggle button.sel {
+    border-color: var(--pine);
+    background: #E4EDE3;
+    color: var(--pine-dark);
+  }
+  .err-msg { font-size: 13px; color: var(--rust); margin-top: 6px; display: none; }
+  .modal-actions { display: flex; gap: 10px; margin-top: 6px; }
+  .modal-actions button {
+    flex: 1;
+    padding: 14px 0;
+    border-radius: 10px;
+    border: none;
+    font-size: 15px;
+    font-weight: 700;
+  }
+  .btn-cancel { background: var(--bg); color: var(--ink-soft); }
+  .btn-save { color: #fff; }
+  .btn-save.in { background: var(--gold); }
+  .btn-save.out { background: var(--rust); }
+  .loading-row { text-align: center; padding: 30px; color: var(--ink-soft); font-size: 14px; }
+  .config-section { padding: 0 20px 26px; }
+  .config-section .section-title { padding: 0 0 10px; }
+  .cat-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+  .cat-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 10px 14px;
+  }
+  .cat-row .name { font-size: 14px; font-weight: 500; }
+  .cat-row .remove-cat {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    border: none;
+    background: var(--bg);
+    color: var(--ink-soft);
+    font-size: 14px;
+  }
+  .add-cat-row { display: flex; gap: 8px; }
+  .add-cat-row input {
+    flex: 1;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    font-size: 15px;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: inherit;
+  }
+  .add-cat-row button {
+    padding: 0 18px;
+    border-radius: 10px;
+    border: none;
+    background: var(--pine);
+    color: #fff;
+    font-weight: 700;
+    font-size: 14px;
+  }
+  .ocr-status { font-size: 12px; color: var(--ink-soft); margin-top: 8px; display: none; }
+  .accordion-item { padding: 0 20px 10px; }
+  .accordion-header {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 14px 16px;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--ink);
+    font-family: inherit;
+  }
+  .accordion-header.open { border-radius: 12px 12px 0 0; border-bottom: none; }
+  .accordion-meta { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-soft); font-weight: 600; }
+  .accordion-meta .chevron { display: inline-block; transition: transform 0.15s; }
+  .accordion-header.open .accordion-meta .chevron { transform: rotate(180deg); }
+  .accordion-body {
+    display: none;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-top: none;
+    border-radius: 0 0 12px 12px;
+    padding: 14px 16px 16px;
+  }
+  .accordion-body.open { display: block; }
+  .hist-filters {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding: 0 20px 16px;
+  }
+  .hist-filters select {
+    padding: 10px 10px;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    font-size: 13px;
+    background: var(--surface);
+    color: var(--ink);
+    font-family: inherit;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <header>
+    <div class="brand">
+      <div class="name">La Emilia</div>
+      <div class="sub">Ingresos y gastos del campo</div>
+    </div>
+  </header>
+
+  <div class="month-nav">
+    <button id="prevMonth" aria-label="Mes anterior">‹</button>
+    <div class="month-label" id="monthLabel">-</div>
+    <button id="nextMonth" aria-label="Mes siguiente">›</button>
+  </div>
+
+  <div id="tab-inicio" class="tab-panel active">
+    <div class="balance-card">
+      <div class="label">Balance del mes</div>
+      <div class="amount" id="balanceAmount">$0</div>
+      <div class="balance-row">
+        <div class="col in">
+          <div class="l">Ingresos</div>
+          <div class="v" id="totalIn">$0</div>
+        </div>
+        <div class="col out">
+          <div class="l">Gastos</div>
+          <div class="v" id="totalOut">$0</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn-in" id="openIncome"><span class="plus">+</span> Ingreso</button>
+      <button class="btn-out" id="openExpense"><span class="plus">+</span> Gasto</button>
+    </div>
+
+    <div class="section-title">Movimientos recientes</div>
+    <div class="movements" id="recentList"></div>
+  </div>
+
+  <div id="tab-historial" class="tab-panel">
+    <div class="hist-filters">
+      <select id="filterType">
+        <option value="">Ingresos y gastos</option>
+        <option value="ingreso">Solo ingresos</option>
+        <option value="gasto">Solo gastos</option>
+      </select>
+      <select id="filterCategory">
+        <option value="">Todas las categorias</option>
+      </select>
+      <select id="filterPartner">
+        <option value="">Todos los proveedores/clientes</option>
+      </select>
+      <select id="filterPerson">
+        <option value="">Daniel y Javier</option>
+        <option value="Daniel">Solo Daniel</option>
+        <option value="Javier">Solo Javier</option>
+      </select>
+    </div>
+    <div class="balance-card" style="margin:0 20px 16px;">
+      <div class="label">Total filtrado (<span id="histCount">0</span> movimientos)</div>
+      <div class="amount" id="histBalance">$0</div>
+      <div class="balance-row">
+        <div class="col in">
+          <div class="l">Ingresos</div>
+          <div class="v" id="histTotalIn">$0</div>
+        </div>
+        <div class="col out">
+          <div class="l">Gastos</div>
+          <div class="v" id="histTotalOut">$0</div>
+        </div>
+      </div>
+    </div>
+    <div class="section-title">Movimientos</div>
+    <div class="movements" id="historyList"></div>
+  </div>
+
+  <div id="tab-resumen" class="tab-panel">
+    <div class="section-title">Resumen por categoria</div>
+    <div class="summary-cat" id="summaryList"></div>
+  </div>
+
+  <div id="tab-config" class="tab-panel">
+    <div class="accordion-item">
+      <button class="accordion-header" data-target="bodyCatIngreso">
+        <span>Categorias de ingresos</span>
+        <span class="accordion-meta"><span id="countCatIngreso">0</span><span class="chevron">&#9662;</span></span>
+      </button>
+      <div class="accordion-body" id="bodyCatIngreso">
+        <div class="cat-list" id="catListIngreso"></div>
+        <div class="add-cat-row">
+          <input type="text" id="newCatIngreso" placeholder="Nueva categoria de ingreso">
+          <button id="addCatIngreso">Agregar</button>
+        </div>
+      </div>
+    </div>
+    <div class="accordion-item">
+      <button class="accordion-header" data-target="bodyClient">
+        <span>Clientes</span>
+        <span class="accordion-meta"><span id="countClient">0</span><span class="chevron">&#9662;</span></span>
+      </button>
+      <div class="accordion-body" id="bodyClient">
+        <div class="cat-list" id="clientList"></div>
+        <div class="add-cat-row">
+          <input type="text" id="newClient" placeholder="Nuevo cliente">
+          <button id="addClient">Agregar</button>
+        </div>
+      </div>
+    </div>
+    <div class="accordion-item">
+      <button class="accordion-header" data-target="bodyCatGasto">
+        <span>Categorias de gastos</span>
+        <span class="accordion-meta"><span id="countCatGasto">0</span><span class="chevron">&#9662;</span></span>
+      </button>
+      <div class="accordion-body" id="bodyCatGasto">
+        <div class="cat-list" id="catListGasto"></div>
+        <div class="add-cat-row">
+          <input type="text" id="newCatGasto" placeholder="Nueva categoria de gasto">
+          <button id="addCatGasto">Agregar</button>
+        </div>
+      </div>
+    </div>
+    <div class="accordion-item">
+      <button class="accordion-header" data-target="bodyProvider">
+        <span>Proveedores</span>
+        <span class="accordion-meta"><span id="countProvider">0</span><span class="chevron">&#9662;</span></span>
+      </button>
+      <div class="accordion-body" id="bodyProvider">
+        <div class="cat-list" id="providerList"></div>
+        <div class="add-cat-row">
+          <input type="text" id="newProvider" placeholder="Nuevo proveedor">
+          <button id="addProvider">Agregar</button>
+        </div>
+      </div>
+    </div>
+    <div class="accordion-item">
+      <button class="accordion-header" data-target="bodyUnit">
+        <span>Unidades de medida</span>
+        <span class="accordion-meta"><span id="countUnit">0</span><span class="chevron">&#9662;</span></span>
+      </button>
+      <div class="accordion-body" id="bodyUnit">
+        <div class="cat-list" id="unitList"></div>
+        <div class="add-cat-row">
+          <input type="text" id="newUnit" placeholder="Nueva unidad (ej: fardos)">
+          <button id="addUnit">Agregar</button>
+        </div>
+      </div>
+    </div>
+    <div class="accordion-item">
+      <button class="accordion-header" data-target="bodyPayment">
+        <span>Formas de pago / cobro</span>
+        <span class="accordion-meta"><span id="countPayment">0</span><span class="chevron">&#9662;</span></span>
+      </button>
+      <div class="accordion-body" id="bodyPayment">
+        <div style="font-size:13px; color:var(--ink-soft); margin-bottom:12px;">
+          Esta lista se usa como "Forma de pago" al cargar gastos, y como "Forma de cobro" al cargar ingresos.
+        </div>
+        <div class="cat-list" id="paymentList"></div>
+        <div class="add-cat-row">
+          <input type="text" id="newPayment" placeholder="Ej: Cheque, Tarjeta">
+          <button id="addPayment">Agregar</button>
+        </div>
+      </div>
+    </div>
+    <div class="config-section">
+      <div class="section-title">Vincular con Google Sheets</div>
+      <div style="font-size:13px; color:var(--ink-soft); margin-bottom:12px;">
+        Pega aca el link de la aplicacion web de Google Apps Script (ver instrucciones aparte). Una vez guardado, cada movimiento nuevo o borrado se manda automaticamente a la planilla.
+      </div>
+      <div class="field">
+        <input type="text" id="sheetUrlInput" placeholder="https://script.google.com/macros/s/..." style="padding:12px 14px; border-radius:10px; border:1px solid var(--line); font-size:14px; background:var(--bg); color:var(--ink); width:100%;">
+      </div>
+      <button id="saveSheetUrl" style="width:100%; padding:13px 0; border-radius:10px; border:none; background:var(--pine); color:#fff; font-weight:700; font-size:14px; margin-bottom:10px;">Guardar link</button>
+      <button id="resyncAll" style="width:100%; padding:13px 0; border-radius:10px; border:1px solid var(--pine); background:transparent; color:var(--pine-dark); font-weight:700; font-size:14px;">Resincronizar todo ahora</button>
+      <div class="ocr-status" id="sheetStatus"></div>
+    </div>
+    <div class="config-section">
+      <div class="section-title">Copia de seguridad</div>
+      <div style="font-size:13px; color:var(--ink-soft); margin-bottom:12px;">
+        Descarga un archivo con todo lo cargado hasta ahora (movimientos, categorias, proveedores, clientes y unidades), para tener un respaldo aparte en el celular.
+      </div>
+      <button id="downloadBackup" style="width:100%; padding:14px 0; border-radius:10px; border:none; background:var(--pine); color:#fff; font-weight:700; font-size:15px;">Descargar copia de seguridad</button>
+    </div>
+  </div>
+
+  <nav class="tabbar">
+    <button class="tab-btn active" data-tab="inicio"><span class="ic">&#8962;</span>Inicio</button>
+    <button class="tab-btn" data-tab="historial"><span class="ic">&#8801;</span>Historial</button>
+    <button class="tab-btn" data-tab="resumen"><span class="ic">&#9724;</span>Resumen</button>
+    <button class="tab-btn" data-tab="config"><span class="ic">&#9881;</span>Config</button>
+  </nav>
+
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal-sheet">
+      <h2 id="modalTitle">Nuevo ingreso</h2>
+      <div class="field">
+        <label>Quien carga esto</label>
+        <div class="person-toggle">
+          <button type="button" data-person="Daniel" id="pPadre">Daniel</button>
+          <button type="button" data-person="Javier" id="pHermano">Javier</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Categoria</label>
+        <select id="fCategory"></select>
+      </div>
+      <div id="ingresoExtraA" style="display:none">
+        <div class="field">
+          <label>Cliente (opcional)</label>
+          <select id="fClient"></select>
+        </div>
+      </div>
+      <div id="gastoExtraA" style="display:none">
+        <div class="field">
+          <label>Proveedor (opcional)</label>
+          <select id="fProvider"></select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Fecha</label>
+        <input type="date" id="fDate">
+      </div>
+      <div id="gastoExtraB" style="display:none">
+        <div class="field">
+          <label>Numero de factura (opcional)</label>
+          <input type="text" id="fInvoice" placeholder="0001-00012345">
+        </div>
+      </div>
+      <div class="field">
+        <label>Cantidad (opcional)</label>
+        <div style="display:flex; gap:8px;">
+          <select id="fUnit" style="flex:1;"></select>
+          <input type="number" id="fQuantity" inputmode="decimal" placeholder="0" min="0" step="0.01" style="flex:1;">
+        </div>
+      </div>
+      <div class="field">
+        <label id="paymentLabel">Forma de pago (opcional)</label>
+        <select id="fPayment"></select>
+      </div>
+      <div class="field">
+        <label>Monto</label>
+        <input type="number" id="fAmount" inputmode="decimal" placeholder="0" min="0" step="1">
+      </div>
+      <div class="field">
+        <label>Nota (opcional)</label>
+        <textarea id="fNote" placeholder="Detalle breve"></textarea>
+      </div>
+      <div class="err-msg" id="formErr">Completa el monto para continuar.</div>
+      <div class="modal-actions">
+        <button class="btn-cancel" id="cancelBtn">Cancelar</button>
+        <button class="btn-save" id="saveBtn">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const DEFAULT_CATS = {
+  ingreso: ["Venta de granos", "Venta de hacienda", "Otros ingresos"],
+  gasto: ["Insumos agricolas", "Insumos ganaderos", "Combustible", "Sueldos y jornales", "Mantenimiento", "Otros gastos"]
+};
+let CATS = { ingreso: [...DEFAULT_CATS.ingreso], gasto: [...DEFAULT_CATS.gasto] };
+const DEFAULT_UNITS = ["Litros", "Kilogramos", "Bolsas", "Unidades"];
+let UNITS = [...DEFAULT_UNITS];
+let PROVIDERS = [];
+const DEFAULT_PAYMENTS = ["Efectivo", "Transferencia", "Cheque"];
+let PAYMENT_METHODS = [...DEFAULT_PAYMENTS];
+let CLIENTS = [];
+
+// La planilla de Google (via Apps Script) es ahora la base de datos real,
+// compartida entre todos los que abren este link. sheetUrl se guarda por
+// telefono en localStorage (es solo la direccion, no los datos).
+const SHEET_URL_KEY = "la_emilia_sheet_url";
+let sheetUrl = "";
+try { sheetUrl = localStorage.getItem(SHEET_URL_KEY) || ""; } catch (e) { sheetUrl = ""; }
+
+// Copia local de respaldo para que la app abra al instante y funcione
+// aunque no haya conexion en ese momento.
+const LOCAL_CACHE_KEY = "la_emilia_cache_v1";
+
+function loadLocalCache() {
+  try {
+    const raw = localStorage.getItem(LOCAL_CACHE_KEY);
+    if (!raw) return;
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed.movimientos)) movimientos = parsed.movimientos;
+    if (parsed.categorias) {
+      CATS.ingreso = Array.isArray(parsed.categorias.ingreso) && parsed.categorias.ingreso.length ? parsed.categorias.ingreso : DEFAULT_CATS.ingreso;
+      CATS.gasto = Array.isArray(parsed.categorias.gasto) && parsed.categorias.gasto.length ? parsed.categorias.gasto : DEFAULT_CATS.gasto;
+    }
+    if (Array.isArray(parsed.proveedores)) PROVIDERS = parsed.proveedores;
+    if (Array.isArray(parsed.clientes)) CLIENTS = parsed.clientes;
+    if (Array.isArray(parsed.unidades) && parsed.unidades.length) UNITS = parsed.unidades;
+    if (Array.isArray(parsed.formasPago) && parsed.formasPago.length) PAYMENT_METHODS = parsed.formasPago;
+  } catch (e) {
+    // sin cache local todavia
+  }
+}
+
+function saveLocalCache() {
+  try {
+    localStorage.setItem(LOCAL_CACHE_KEY, JSON.stringify({
+      movimientos: movimientos,
+      categorias: CATS,
+      proveedores: PROVIDERS,
+      clientes: CLIENTS,
+      unidades: UNITS,
+      formasPago: PAYMENT_METHODS
+    }));
+  } catch (e) {
+    // si no hay espacio o esta bloqueado, seguimos igual
+  }
+}
+
+function setSheetStatus(text) {
+  const status = document.getElementById("sheetStatus");
+  if (!status) return;
+  if (!text) { status.style.display = "none"; return; }
+  status.style.display = "block";
+  status.textContent = text;
+}
+
+// Lee todo (movimientos + listas configurables) desde la planilla.
+async function fetchAllFromSheet() {
+  if (!sheetUrl) { storageReady = true; renderEverything(); return; }
+  try {
+    const sep = sheetUrl.includes("?") ? "&" : "?";
+    const res = await fetch(sheetUrl + sep + "action=get_all");
+    const data = await res.json();
+
+    // Una respuesta solo sirve si trae de verdad la lista de movimientos.
+    // Si el Apps Script esta desactualizado contesta sin ella, y tomarla por
+    // buena vaciaria la app y el respaldo de este celular.
+    if (!data || !Array.isArray(data.movimientos)) {
+      setSheetStatus("La planilla contesto, pero sin los movimientos: el Apps Script quedo desactualizado. Por ahora se muestra lo guardado en este celular y no se perdio nada.");
+      storageReady = true;
+      renderEverything();
+      return;
+    }
+
+    movimientos = data.movimientos;
+    // Las listas solo se reemplazan cuando la planilla trae valores. Si vienen
+    // vacias se conservan las de este celular en lugar de borrarlas.
+    if (data.categorias && Array.isArray(data.categorias.ingreso) && data.categorias.ingreso.length) CATS.ingreso = data.categorias.ingreso;
+    if (data.categorias && Array.isArray(data.categorias.gasto) && data.categorias.gasto.length) CATS.gasto = data.categorias.gasto;
+    if (Array.isArray(data.proveedores) && data.proveedores.length) PROVIDERS = data.proveedores;
+    if (Array.isArray(data.clientes) && data.clientes.length) CLIENTS = data.clientes;
+    if (Array.isArray(data.unidades) && data.unidades.length) UNITS = data.unidades;
+    if (Array.isArray(data.formasPago) && data.formasPago.length) PAYMENT_METHODS = data.formasPago;
+    saveLocalCache();
+    setSheetStatus("");
+  } catch (e) {
+    console.error("No se pudo leer la planilla", e);
+    setSheetStatus("No se pudo conectar con la planilla ahora. Mostrando la ultima info guardada en este celular.");
+  }
+  storageReady = true;
+  renderEverything();
+}
+
+// Manda un cambio a la planilla. Se usa modo no-cors (no podemos leer la
+// respuesta), asi que la app ya actualizo su copia local antes de llamar
+// a esto, y despues se vuelve a sincronizar para confirmar con el resto.
+function postToSheet(action, payload) {
+  if (!sheetUrl) return;
+  try {
+    fetch(sheetUrl, {
+      method: "POST",
+      mode: "no-cors",
+      body: JSON.stringify(Object.assign({ action: action }, payload))
+    });
+  } catch (e) {
+    console.error("No se pudo sincronizar con la planilla", e);
+  }
+  setTimeout(fetchAllFromSheet, 2500);
+}
+
+function renderEverything() {
+  render();
+  renderConfig();
+  renderProviderConfig();
+  renderClientConfig();
+  renderUnitConfig();
+  renderPaymentConfig();
+  fillProviderSelect();
+  fillClientSelect();
+  fillUnitSelect();
+  fillPaymentSelect();
+}
+
+// Guarda un archivo generado por la app (backup). Si la pagina corre
+// dentro de Claude con el permiso de descargas, lo usa; si no (por
+// ejemplo alojada como pagina comun), usa el metodo clasico del navegador.
+async function saveFile(filename, text, mime) {
+  try {
+    if (window.claude && window.claude.use) {
+      const dl = await window.claude.use("downloads");
+      if (dl) { await dl.save({ filename: filename, data: text }); return; }
+    }
+  } catch (e) {
+    console.error("No se pudo guardar via Claude, uso metodo del navegador", e);
+  }
+  const blob = new Blob([text], { type: mime || "application/octet-stream" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+const MONTHS = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+
+let movimientos = [];
+let currentDate = new Date();
+let currentTab = "inicio";
+let modalType = "ingreso";
+let selectedPerson = "Padre";
+let storageReady = false;
+
+function renderSimpleList(items, containerId, onRemove) {
+  const container = document.getElementById(containerId);
+  if (items.length === 0) {
+    container.innerHTML = '<div class="empty-state" style="padding:10px 0;">Todavia no hay nada cargado aca.</div>';
+    return;
+  }
+  container.innerHTML = items.map(v =>
+    '<div class="cat-row"><span class="name">' + escapeHtml(v) + '</span>' +
+    '<button class="remove-cat" data-name="' + escapeHtml(v) + '" aria-label="Eliminar">&times;</button></div>'
+  ).join("");
+  container.querySelectorAll(".remove-cat").forEach(btn => {
+    btn.addEventListener("click", () => onRemove(btn.getAttribute("data-name")));
+  });
+}
+
+function renderProviderConfig() {
+  renderSimpleList(PROVIDERS, "providerList", (name) => {
+    if (!confirm('Eliminar el proveedor "' + name + '"?')) return;
+    PROVIDERS = PROVIDERS.filter(p => p !== name);
+    saveLocalCache();
+    renderProviderConfig();
+    fillProviderSelect();
+    postToSheet("config_remove", { list: "proveedores", value: name });
+  });
+  updateAccordionCounts();
+}
+
+function addProvider(name) {
+  const clean = name.trim();
+  if (!clean) return;
+  if (PROVIDERS.some(p => p.toLowerCase() === clean.toLowerCase())) { alert("Ese proveedor ya esta cargado."); return; }
+  PROVIDERS.push(clean);
+  saveLocalCache();
+  renderProviderConfig();
+  fillProviderSelect();
+  postToSheet("config_add", { list: "proveedores", value: clean });
+}
+
+function renderClientConfig() {
+  renderSimpleList(CLIENTS, "clientList", (name) => {
+    if (!confirm('Eliminar el cliente "' + name + '"?')) return;
+    CLIENTS = CLIENTS.filter(c => c !== name);
+    saveLocalCache();
+    renderClientConfig();
+    fillClientSelect();
+    postToSheet("config_remove", { list: "clientes", value: name });
+  });
+  updateAccordionCounts();
+}
+
+function addClient(name) {
+  const clean = name.trim();
+  if (!clean) return;
+  if (CLIENTS.some(c => c.toLowerCase() === clean.toLowerCase())) { alert("Ese cliente ya esta cargado."); return; }
+  CLIENTS.push(clean);
+  saveLocalCache();
+  renderClientConfig();
+  fillClientSelect();
+  postToSheet("config_add", { list: "clientes", value: clean });
+}
+
+function fillClientSelect() {
+  const sel = document.getElementById("fClient");
+  if (CLIENTS.length === 0) {
+    sel.innerHTML = '<option value="">Sin clientes cargados (agregalos en Config)</option>';
+    return;
+  }
+  sel.innerHTML = '<option value="">Sin especificar</option>' +
+    CLIENTS.map(c => '<option value="' + escapeHtml(c) + '">' + escapeHtml(c) + '</option>').join("");
+}
+
+function renderUnitConfig() {
+  renderSimpleList(UNITS, "unitList", (name) => {
+    if (UNITS.length <= 1) { alert("Tiene que quedar al menos una unidad."); return; }
+    if (!confirm('Eliminar la unidad "' + name + '"?')) return;
+    UNITS = UNITS.filter(u => u !== name);
+    saveLocalCache();
+    renderUnitConfig();
+    fillUnitSelect();
+    postToSheet("config_remove", { list: "unidades", value: name });
+  });
+  updateAccordionCounts();
+}
+
+function addUnit(name) {
+  const clean = name.trim();
+  if (!clean) return;
+  if (UNITS.some(u => u.toLowerCase() === clean.toLowerCase())) { alert("Esa unidad ya existe."); return; }
+  UNITS.push(clean);
+  saveLocalCache();
+  renderUnitConfig();
+  fillUnitSelect();
+  postToSheet("config_add", { list: "unidades", value: clean });
+}
+
+function fillProviderSelect() {
+  const sel = document.getElementById("fProvider");
+  if (PROVIDERS.length === 0) {
+    sel.innerHTML = '<option value="">Sin proveedores cargados (agregalos en Config)</option>';
+    return;
+  }
+  sel.innerHTML = '<option value="">Sin especificar</option>' +
+    PROVIDERS.map(p => '<option value="' + escapeHtml(p) + '">' + escapeHtml(p) + '</option>').join("");
+}
+
+function fillUnitSelect() {
+  const sel = document.getElementById("fUnit");
+  sel.innerHTML = '<option value="">Sin unidad</option>' +
+    UNITS.map(u => '<option value="' + escapeHtml(u) + '">' + escapeHtml(u) + '</option>').join("");
+}
+
+function renderPaymentConfig() {
+  renderSimpleList(PAYMENT_METHODS, "paymentList", (name) => {
+    if (PAYMENT_METHODS.length <= 1) { alert("Tiene que quedar al menos una forma de pago."); return; }
+    if (!confirm('Eliminar "' + name + '"?')) return;
+    PAYMENT_METHODS = PAYMENT_METHODS.filter(p => p !== name);
+    saveLocalCache();
+    renderPaymentConfig();
+    fillPaymentSelect();
+    postToSheet("config_remove", { list: "formas_pago", value: name });
+  });
+  updateAccordionCounts();
+}
+
+function addPaymentMethod(name) {
+  const clean = name.trim();
+  if (!clean) return;
+  if (PAYMENT_METHODS.some(p => p.toLowerCase() === clean.toLowerCase())) { alert("Esa opcion ya existe."); return; }
+  PAYMENT_METHODS.push(clean);
+  saveLocalCache();
+  renderPaymentConfig();
+  fillPaymentSelect();
+  postToSheet("config_add", { list: "formas_pago", value: clean });
+}
+
+function fillPaymentSelect() {
+  const sel = document.getElementById("fPayment");
+  sel.innerHTML = '<option value="">Sin especificar</option>' +
+    PAYMENT_METHODS.map(p => '<option value="' + escapeHtml(p) + '">' + escapeHtml(p) + '</option>').join("");
+}
+
+function updateAccordionCounts() {
+  const set = (id, n) => { const el = document.getElementById(id); if (el) el.textContent = n; };
+  set("countCatIngreso", CATS.ingreso.length);
+  set("countCatGasto", CATS.gasto.length);
+  set("countClient", CLIENTS.length);
+  set("countProvider", PROVIDERS.length);
+  set("countUnit", UNITS.length);
+  set("countPayment", PAYMENT_METHODS.length);
+}
+
+function renderConfig() {
+  const wrap = (type, containerId) => {
+    const container = document.getElementById(containerId);
+    container.innerHTML = CATS[type].map(c =>
+      '<div class="cat-row"><span class="name">' + escapeHtml(c) + '</span>' +
+      '<button class="remove-cat" data-type="' + type + '" data-name="' + escapeHtml(c) + '" aria-label="Eliminar categoria">&times;</button></div>'
+    ).join("");
+  };
+  wrap("ingreso", "catListIngreso");
+  wrap("gasto", "catListGasto");
+  document.querySelectorAll(".remove-cat").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const type = btn.getAttribute("data-type");
+      const name = btn.getAttribute("data-name");
+      removeCategory(type, name);
+    });
+  });
+  updateAccordionCounts();
+}
+
+function addCategory(type, name) {
+  const clean = name.trim();
+  if (!clean) return;
+  const exists = CATS[type].some(c => c.toLowerCase() === clean.toLowerCase());
+  if (exists) { alert("Esa categoria ya existe."); return; }
+  CATS[type].push(clean);
+  saveLocalCache();
+  renderConfig();
+  postToSheet("config_add", { list: type === "ingreso" ? "cat_ingreso" : "cat_gasto", value: clean });
+}
+
+function removeCategory(type, name) {
+  if (CATS[type].length <= 1) {
+    alert("Tiene que quedar al menos una categoria.");
+    return;
+  }
+  if (!confirm("Eliminar la categoria \"" + name + "\"? Los movimientos ya cargados con esta categoria no cambian.")) return;
+  CATS[type] = CATS[type].filter(c => c !== name);
+  saveLocalCache();
+  renderConfig();
+  postToSheet("config_remove", { list: type === "ingreso" ? "cat_ingreso" : "cat_gasto", value: name });
+}
+
+function fmt(n) {
+  return "$" + Math.round(n).toLocaleString("es-AR");
+}
+
+function todayStr() {
+  const d = new Date();
+  return d.toISOString().slice(0,10);
+}
+
+async function loadData() {
+  loadLocalCache();
+  storageReady = true;
+  renderEverything();
+  document.getElementById("sheetUrlInput").value = sheetUrl;
+  if (!sheetUrl) {
+    setSheetStatus("Todavia no vinculaste una planilla: los datos quedan solo en este celular hasta que pegues el link arriba.");
+  }
+  await fetchAllFromSheet();
+  setInterval(fetchAllFromSheet, 300000);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") fetchAllFromSheet();
+  });
+}
+
+function monthKey(d) {
+  return d.getFullYear() + "-" + d.getMonth();
+}
+
+function filteredForMonth() {
+  const key = monthKey(currentDate);
+  return movimientos.filter(m => {
+    const md = new Date(m.date + "T00:00:00");
+    return monthKey(md) === key;
+  }).sort((a,b) => b.date.localeCompare(a.date) || b.id - a.id);
+}
+
+function renderMonthLabel() {
+  document.getElementById("monthLabel").textContent = MONTHS[currentDate.getMonth()] + " " + currentDate.getFullYear();
+}
+
+function renderBalance(list) {
+  const totalIn = list.filter(m => m.type === "ingreso").reduce((s,m) => s + m.amount, 0);
+  const totalOut = list.filter(m => m.type === "gasto").reduce((s,m) => s + m.amount, 0);
+  const bal = totalIn - totalOut;
+  const balEl = document.getElementById("balanceAmount");
+  balEl.textContent = fmt(bal);
+  balEl.className = "amount" + (bal < 0 ? " negative" : "");
+  document.getElementById("totalIn").textContent = fmt(totalIn);
+  document.getElementById("totalOut").textContent = fmt(totalOut);
+}
+
+function moveItemHtml(m) {
+  const sign = m.type === "ingreso" ? "+" : "-";
+  const cls = m.type === "ingreso" ? "in" : "out";
+  const personCls = m.person === "Daniel" ? "padre" : "hermano";
+  const note = m.note ? '<div class="note">' + escapeHtml(m.note) + '</div>' : "";
+  const provider = m.provider ? '<div class="note">Proveedor: ' + escapeHtml(m.provider) + '</div>' : "";
+  const client = m.client ? '<div class="note">Cliente: ' + escapeHtml(m.client) + '</div>' : "";
+  const invoice = m.invoice ? '<div class="note">Factura: ' + escapeHtml(m.invoice) + '</div>' : "";
+  const quantity = m.quantity ? '<div class="note">Cantidad: ' + m.quantity + (m.unit ? " " + escapeHtml(m.unit) : "") + '</div>' : "";
+  const paymentLabelText = m.type === "gasto" ? "Forma de pago: " : "Forma de cobro: ";
+  const payment = m.payment ? '<div class="note">' + paymentLabelText + escapeHtml(m.payment) + '</div>' : "";
+  return '<div class="move-item" data-id="' + m.id + '">' +
+    '<div class="left">' +
+      '<div class="cat">' + escapeHtml(m.category) + '</div>' +
+      '<div class="tags"><span class="tag ' + personCls + '">' + m.person + '</span></div>' +
+      provider + client + invoice + quantity + payment + note +
+    '</div>' +
+    '<div class="right">' +
+      '<div class="amt ' + cls + '">' + sign + fmt(m.amount) + '</div>' +
+      '<button class="del-btn" data-del="' + m.id + '" aria-label="Eliminar">&times;</button>' +
+    '</div>' +
+  '</div>';
+}
+
+function groupByDay(list) {
+  const groups = {};
+  list.forEach(m => {
+    if (!groups[m.date]) groups[m.date] = [];
+    groups[m.date].push(m);
+  });
+  return groups;
+}
+
+function dayLabel(dateStr) {
+  const d = new Date(dateStr + "T00:00:00");
+  return d.getDate() + " de " + MONTHS[d.getMonth()];
+}
+
+function renderList(containerId, list, limit) {
+  const container = document.getElementById(containerId);
+  const items = limit ? list.slice(0, limit) : list;
+  if (items.length === 0) {
+    container.innerHTML = '<div class="empty-state"><div class="big">&#9633;</div>Todavia no hay movimientos cargados este mes.</div>';
+    return;
+  }
+  const groups = groupByDay(items);
+  const days = Object.keys(groups).sort().reverse();
+  let html = "";
+  days.forEach(day => {
+    html += '<div class="day-group"><div class="day-label">' + dayLabel(day) + '</div>';
+    groups[day].forEach(m => { html += moveItemHtml(m); });
+    html += '</div>';
+  });
+  container.innerHTML = html;
+  container.querySelectorAll(".del-btn").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const id = btn.getAttribute("data-del");
+      if (confirm("Eliminar este movimiento?")) {
+        const deleted = movimientos.find(m => m.id === id);
+        movimientos = movimientos.filter(m => m.id !== id);
+        saveLocalCache();
+        render();
+        if (deleted) postToSheet("delete", { type: deleted.type, id: deleted.id });
+      }
+    });
+  });
+}
+
+function renderSummary(list) {
+  const container = document.getElementById("summaryList");
+  const totalIn = list.filter(m => m.type === "ingreso").reduce((s,m) => s + m.amount, 0);
+  const totalOut = list.filter(m => m.type === "gasto").reduce((s,m) => s + m.amount, 0);
+  const maxVal = Math.max(totalIn, totalOut, 1);
+
+  function catTotals(type) {
+    const totals = {};
+    CATS[type].forEach(c => totals[c] = 0);
+    list.filter(m => m.type === type).forEach(m => {
+      totals[m.category] = (totals[m.category] || 0) + m.amount;
+    });
+    return totals;
+  }
+
+  if (list.length === 0) {
+    container.innerHTML = '<div class="empty-state"><div class="big">&#9633;</div>Cargá movimientos para ver el resumen del mes.</div>';
+    return;
+  }
+
+  let html = '<div class="summary-group-title">Ingresos por categoria</div>';
+  const inTotals = catTotals("ingreso");
+  Object.keys(inTotals).forEach(cat => {
+    const v = inTotals[cat];
+    const pct = totalIn > 0 ? Math.round((v / totalIn) * 100) : 0;
+    html += '<div class="bar-row"><div class="bar-top"><span class="name">' + cat + '</span><span class="val" style="color:var(--gold)">' + fmt(v) + '</span></div>' +
+      '<div class="bar-track"><div class="bar-fill in" style="width:' + pct + '%"></div></div></div>';
+  });
+
+  html += '<div class="summary-group-title">Gastos por categoria</div>';
+  const outTotals = catTotals("gasto");
+  Object.keys(outTotals).forEach(cat => {
+    const v = outTotals[cat];
+    const pct = totalOut > 0 ? Math.round((v / totalOut) * 100) : 0;
+    html += '<div class="bar-row"><div class="bar-top"><span class="name">' + cat + '</span><span class="val" style="color:var(--rust)">' + fmt(v) + '</span></div>' +
+      '<div class="bar-track"><div class="bar-fill out" style="width:' + pct + '%"></div></div></div>';
+  });
+
+  container.innerHTML = html;
+}
+
+function escapeHtml(str) {
+  const d = document.createElement("div");
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+function render() {
+  if (!storageReady) return;
+  renderMonthLabel();
+  const list = filteredForMonth();
+  renderBalance(list);
+  renderList("recentList", list, 6);
+  renderHistorial();
+  renderSummary(list);
+}
+
+let filterType = "";
+let filterCategory = "";
+let filterPartner = "";
+let filterPerson = "";
+
+function getFilteredHistorial() {
+  let list = filteredForMonth();
+  if (filterType) list = list.filter(m => m.type === filterType);
+  if (filterCategory) list = list.filter(m => m.category === filterCategory);
+  if (filterPartner) list = list.filter(m => m.provider === filterPartner || m.client === filterPartner);
+  if (filterPerson) list = list.filter(m => m.person === filterPerson);
+  return list;
+}
+
+function renderHistorialFilterOptions() {
+  const catSel = document.getElementById("filterCategory");
+  let cats;
+  if (filterType === "ingreso") cats = CATS.ingreso;
+  else if (filterType === "gasto") cats = CATS.gasto;
+  else cats = Array.from(new Set([...CATS.ingreso, ...CATS.gasto]));
+  catSel.innerHTML = '<option value="">Todas las categorias</option>' +
+    cats.map(c => '<option value="' + escapeHtml(c) + '"' + (c === filterCategory ? " selected" : "") + '>' + escapeHtml(c) + '</option>').join("");
+  if (!cats.includes(filterCategory)) filterCategory = "";
+
+  const partnerSel = document.getElementById("filterPartner");
+  const partners = Array.from(new Set([...PROVIDERS, ...CLIENTS]));
+  partnerSel.innerHTML = '<option value="">Todos los proveedores/clientes</option>' +
+    partners.map(p => '<option value="' + escapeHtml(p) + '"' + (p === filterPartner ? " selected" : "") + '>' + escapeHtml(p) + '</option>').join("");
+  if (!partners.includes(filterPartner)) filterPartner = "";
+}
+
+function renderHistorialTotals(list) {
+  const totalIn = list.filter(m => m.type === "ingreso").reduce((s, m) => s + m.amount, 0);
+  const totalOut = list.filter(m => m.type === "gasto").reduce((s, m) => s + m.amount, 0);
+  const bal = totalIn - totalOut;
+  document.getElementById("histCount").textContent = list.length;
+  document.getElementById("histTotalIn").textContent = fmt(totalIn);
+  document.getElementById("histTotalOut").textContent = fmt(totalOut);
+  const balEl = document.getElementById("histBalance");
+  balEl.textContent = fmt(bal);
+  balEl.className = "amount" + (bal < 0 ? " negative" : "");
+}
+
+function renderHistorial() {
+  renderHistorialFilterOptions();
+  const list = getFilteredHistorial();
+  renderHistorialTotals(list);
+  renderList("historyList", list, null);
+}
+
+document.getElementById("filterType").addEventListener("change", (e) => {
+  filterType = e.target.value;
+  filterCategory = "";
+  renderHistorial();
+});
+document.getElementById("filterCategory").addEventListener("change", (e) => {
+  filterCategory = e.target.value;
+  renderHistorial();
+});
+document.getElementById("filterPartner").addEventListener("change", (e) => {
+  filterPartner = e.target.value;
+  renderHistorial();
+});
+document.getElementById("filterPerson").addEventListener("change", (e) => {
+  filterPerson = e.target.value;
+  renderHistorial();
+});
+
+document.getElementById("prevMonth").addEventListener("click", () => {
+  currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+  render();
+});
+document.getElementById("nextMonth").addEventListener("click", () => {
+  currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
+  render();
+});
+
+document.querySelectorAll(".tab-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+    document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+    btn.classList.add("active");
+    document.getElementById("tab-" + btn.getAttribute("data-tab")).classList.add("active");
+  });
+});
+
+function fillCategorySelect(type) {
+  const sel = document.getElementById("fCategory");
+  sel.innerHTML = CATS[type].map(c => '<option value="' + c + '">' + c + '</option>').join("");
+}
+
+function openModal(type) {
+  modalType = type;
+  const title = document.getElementById("modalTitle");
+  const saveBtn = document.getElementById("saveBtn");
+  title.textContent = type === "ingreso" ? "Nuevo ingreso" : "Nuevo gasto";
+  title.className = type;
+  saveBtn.className = "btn-save " + (type === "ingreso" ? "in" : "out");
+  fillCategorySelect(type);
+  fillProviderSelect();
+  fillClientSelect();
+  fillUnitSelect();
+  fillPaymentSelect();
+  document.getElementById("paymentLabel").textContent = type === "gasto" ? "Forma de pago (opcional)" : "Forma de cobro (opcional)";
+  document.getElementById("fPayment").value = "";
+  document.getElementById("fAmount").value = "";
+  document.getElementById("fDate").value = todayStr();
+  document.getElementById("fNote").value = "";
+  document.getElementById("fInvoice").value = "";
+  document.getElementById("fProvider").value = "";
+  document.getElementById("fClient").value = "";
+  document.getElementById("fQuantity").value = "";
+  document.getElementById("fUnit").value = "";
+  document.getElementById("ingresoExtraA").style.display = type === "ingreso" ? "block" : "none";
+  document.getElementById("gastoExtraA").style.display = type === "gasto" ? "block" : "none";
+  document.getElementById("gastoExtraB").style.display = type === "gasto" ? "block" : "none";
+  document.getElementById("formErr").style.display = "none";
+  selectPerson("Daniel");
+  document.getElementById("modalOverlay").classList.add("open");
+}
+
+function closeModal() {
+  document.getElementById("modalOverlay").classList.remove("open");
+}
+
+function selectPerson(p) {
+  selectedPerson = p;
+  document.getElementById("pPadre").classList.toggle("sel", p === "Daniel");
+  document.getElementById("pHermano").classList.toggle("sel", p === "Javier");
+}
+
+document.getElementById("pPadre").addEventListener("click", () => selectPerson("Daniel"));
+document.getElementById("pHermano").addEventListener("click", () => selectPerson("Javier"));
+
+document.getElementById("addCatIngreso").addEventListener("click", () => {
+  const input = document.getElementById("newCatIngreso");
+  addCategory("ingreso", input.value);
+  input.value = "";
+});
+document.getElementById("addCatGasto").addEventListener("click", () => {
+  const input = document.getElementById("newCatGasto");
+  addCategory("gasto", input.value);
+  input.value = "";
+});
+document.getElementById("newCatIngreso").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") document.getElementById("addCatIngreso").click();
+});
+document.getElementById("newCatGasto").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") document.getElementById("addCatGasto").click();
+});
+
+document.getElementById("addProvider").addEventListener("click", () => {
+  const input = document.getElementById("newProvider");
+  addProvider(input.value);
+  input.value = "";
+});
+document.getElementById("newProvider").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") document.getElementById("addProvider").click();
+});
+
+document.getElementById("addClient").addEventListener("click", () => {
+  const input = document.getElementById("newClient");
+  addClient(input.value);
+  input.value = "";
+});
+document.getElementById("newClient").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") document.getElementById("addClient").click();
+});
+
+document.getElementById("addUnit").addEventListener("click", () => {
+  const input = document.getElementById("newUnit");
+  addUnit(input.value);
+  input.value = "";
+});
+document.getElementById("newUnit").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") document.getElementById("addUnit").click();
+});
+
+document.getElementById("addPayment").addEventListener("click", () => {
+  const input = document.getElementById("newPayment");
+  addPaymentMethod(input.value);
+  input.value = "";
+});
+document.getElementById("newPayment").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") document.getElementById("addPayment").click();
+});
+
+document.querySelectorAll(".accordion-header").forEach(header => {
+  header.addEventListener("click", () => {
+    const targetId = header.getAttribute("data-target");
+    const body = document.getElementById(targetId);
+    const isOpen = body.classList.contains("open");
+    document.querySelectorAll(".accordion-body.open").forEach(b => b.classList.remove("open"));
+    document.querySelectorAll(".accordion-header.open").forEach(h => h.classList.remove("open"));
+    if (!isOpen) {
+      body.classList.add("open");
+      header.classList.add("open");
+    }
+  });
+});
+
+document.getElementById("saveSheetUrl").addEventListener("click", () => {
+  sheetUrl = document.getElementById("sheetUrlInput").value.trim();
+  try { localStorage.setItem(SHEET_URL_KEY, sheetUrl); } catch (e) {}
+  if (!sheetUrl) {
+    setSheetStatus("Se borro el link. Los datos van a quedar solo en este celular.");
+    return;
+  }
+  setSheetStatus("Conectando con la planilla...");
+  fetchAllFromSheet();
+});
+
+document.getElementById("resyncAll").addEventListener("click", () => {
+  if (!sheetUrl) {
+    setSheetStatus("Primero guarda el link de la planilla.");
+    return;
+  }
+  postToSheet("resync_all", { movimientos: movimientos });
+  setSheetStatus("Se mando la sincronizacion completa. Revisa la planilla en unos segundos para confirmar.");
+});
+
+document.getElementById("downloadBackup").addEventListener("click", () => {
+  const backup = {
+    exportadoEl: new Date().toISOString(),
+    movimientos: movimientos,
+    categorias: CATS,
+    proveedores: PROVIDERS,
+    clientes: CLIENTS,
+    unidades: UNITS,
+    formasPago: PAYMENT_METHODS
+  };
+  saveFile("la-emilia-backup-" + todayStr() + ".json", JSON.stringify(backup, null, 2), "application/json");
+});
+
+document.getElementById("openIncome").addEventListener("click", () => openModal("ingreso"));
+document.getElementById("openExpense").addEventListener("click", () => openModal("gasto"));
+document.getElementById("cancelBtn").addEventListener("click", closeModal);
+document.getElementById("modalOverlay").addEventListener("click", (e) => {
+  if (e.target.id === "modalOverlay") closeModal();
+});
+
+document.getElementById("saveBtn").addEventListener("click", async () => {
+  const amountVal = document.getElementById("fAmount").value;
+  const errEl = document.getElementById("formErr");
+  const amount = parseFloat(amountVal);
+  if (!amountVal || isNaN(amount) || amount <= 0) {
+    errEl.textContent = "Ingresa un monto valido para continuar.";
+    errEl.style.display = "block";
+    return;
+  }
+  const dateVal = document.getElementById("fDate").value;
+  if (!dateVal) {
+    errEl.textContent = "Elegi una fecha para continuar.";
+    errEl.style.display = "block";
+    return;
+  }
+  errEl.style.display = "none";
+  const entry = {
+    id: String(Date.now()),
+    type: modalType,
+    category: document.getElementById("fCategory").value,
+    amount: amount,
+    date: dateVal,
+    person: selectedPerson,
+    note: document.getElementById("fNote").value.trim(),
+    client: modalType === "ingreso" ? document.getElementById("fClient").value.trim() : "",
+    invoice: modalType === "gasto" ? document.getElementById("fInvoice").value.trim() : "",
+    provider: modalType === "gasto" ? document.getElementById("fProvider").value.trim() : "",
+    quantity: document.getElementById("fQuantity").value ? parseFloat(document.getElementById("fQuantity").value) : null,
+    unit: document.getElementById("fUnit").value.trim(),
+    payment: document.getElementById("fPayment").value.trim()
+  };
+  movimientos.push(entry);
+  saveLocalCache();
+  closeModal();
+  render();
+  postToSheet("add", { movimiento: entry });
+});
+
+loadData();
+</script>
+</body>
+</html>
