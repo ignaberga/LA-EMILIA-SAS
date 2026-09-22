@@ -12,21 +12,39 @@ teléfonos leen de ahí al abrir la app y escriben cada cambio, así todos ven l
 mismo. Cada teléfono guarda además una copia local para abrir al instante y
 seguir cargando sin señal.
 
-La planilla se conecta desde Config → Vincular con Google Sheets, pegando la
-dirección de la aplicación web de Apps Script (la que termina en `/exec`). No es
-el link de la planilla. Hay que hacerlo una vez en cada teléfono.
+Lo que se carga sin señal queda guardado en el celular como pendiente y se manda
+solo cuando vuelve la conexión. Mientras haya pendientes, en Inicio aparece un
+cartel amarillo que dice cuántos cambios faltan enviar. Si el celular no está
+conectado a la planilla, aparece un cartel rojo.
+
+La conexión con la planilla es la dirección de la aplicación web de Apps Script
+(la que termina en `/exec`). No es el link de la planilla.
 
 **Esa dirección es la llave de los datos y nunca va en este repositorio.**
 Se comparte por mensaje directo, no se publica en ningún lado.
 
-## Instalar en el celular
+## Instalar en el celular (una sola vez)
 
-Abrir la dirección de arriba y agregarla a la pantalla de inicio:
+1. Desde un celular ya conectado, entrar a **Config → Planilla de Google** y
+   tocar **Compartir link de instalación para Daniel** (o para Javier).
+   Mandarlo por WhatsApp.
+2. La persona abre ese link y, **desde esa misma página**, agrega la app a la
+   pantalla de inicio:
+   - **iPhone:** en Safari, Compartir → Agregar a inicio. Si el link se abrió
+     dentro de WhatsApp, primero tocar el ícono de Safari para abrirlo ahí.
+   - **Android:** en Chrome, menú de tres puntos → Agregar a pantalla principal.
+3. Listo: el ícono queda con la conexión a la planilla y el nombre de la persona.
+   No hay que pegar nada, ni ahora ni después.
 
-- **iPhone** — en Safari: Compartir → Agregar a inicio.
-- **Android** — en Chrome: menú de tres puntos → Agregar a pantalla principal.
+Si ya había un ícono viejo, borrarlo antes y usar solo el nuevo.
 
 No es una app de tienda: es la página web, así que se actualiza sola.
+
+## Apps Script
+
+El código que corre dentro de la planilla está respaldado en
+[`apps-script/Code.gs`](apps-script/Code.gs). Al principio del archivo están los
+pasos para actualizarlo sin que cambie el link.
 
 ## Actualizar la app
 
