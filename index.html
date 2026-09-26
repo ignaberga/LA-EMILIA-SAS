@@ -180,14 +180,25 @@
   .move-item .amt { font-size: 16px; font-weight: 700; white-space: nowrap; }
   .amt.in { color: var(--gold); }
   .amt.out { color: var(--rust); }
-  .del-btn {
-    width: 28px; height: 28px;
+  .edit-btn {
+    width: 32px; height: 32px;
     border-radius: 50%;
     border: none;
     background: var(--bg);
     color: var(--ink-soft);
-    font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0;
   }
+  .edit-btn svg { width: 16px; height: 16px; }
+  .action-detail { font-size: 14px; color: var(--ink-soft); margin: -8px 0 18px; line-height: 1.5; }
+  .action-list { display: flex; flex-direction: column; gap: 10px; }
+  .action-list button {
+    width: 100%; padding: 15px 0; border-radius: 12px; border: none;
+    font-size: 16px; font-weight: 700; font-family: inherit;
+  }
+  .act-edit { background: var(--pine); color: #fff; }
+  .act-delete { background: var(--rust-bg); color: var(--rust); }
+  .act-cancel { background: var(--bg); color: var(--ink-soft); }
   .empty-state {
     text-align: center;
     padding: 40px 20px;
@@ -623,21 +634,6 @@
       <div class="section-title">Planilla de Google</div>
       <div class="link-state" id="linkState"></div>
       <div class="help-text" id="lastSyncText"></div>
-      <div class="help-text" style="margin-top:14px;">
-        Vincular a mano: pegá acá la dirección de la aplicación web de Apps Script (la que termina en /exec).
-      </div>
-      <div class="field">
-        <input type="text" id="sheetUrlInput" placeholder="https://script.google.com/macros/s/..." style="padding:12px 14px; border-radius:10px; border:1px solid var(--line); font-size:14px; background:var(--bg); color:var(--ink); width:100%;">
-      </div>
-      <button class="btn-outline" id="saveSheetUrl">Guardar dirección</button>
-      <div class="ocr-status" id="sheetStatus"></div>
-    </div>
-    <div class="config-section">
-      <div class="section-title">Copia de seguridad</div>
-      <div style="font-size:13px; color:var(--ink-soft); margin-bottom:12px;">
-        Descarga un archivo con todo lo cargado hasta ahora (movimientos, categorías, proveedores, clientes y unidades), para tener un respaldo aparte en el celular.
-      </div>
-      <button id="downloadBackup" style="width:100%; padding:14px 0; border-radius:10px; border:none; background:var(--pine); color:#fff; font-weight:700; font-size:15px;">Descargar copia de seguridad</button>
     </div>
   </div>
 
@@ -690,7 +686,7 @@
         <label>Cantidad (opcional)</label>
         <div style="display:flex; gap:8px;">
           <select id="fUnit" style="flex:1;"></select>
-          <input type="number" id="fQuantity" inputmode="decimal" placeholder="0" min="0" step="0.01" style="flex:1;">
+          <input type="text" id="fQuantity" inputmode="decimal" autocomplete="off" placeholder="0" style="flex:1;">
         </div>
       </div>
       <div class="field">
@@ -699,7 +695,7 @@
       </div>
       <div class="field">
         <label>Monto</label>
-        <input type="number" id="fAmount" inputmode="decimal" placeholder="0" min="0" step="1">
+        <input type="text" id="fAmount" inputmode="decimal" autocomplete="off" placeholder="0,00">
       </div>
       <div class="field">
         <label>Nota (opcional)</label>
@@ -709,6 +705,18 @@
       <div class="modal-actions">
         <button class="btn-cancel" id="cancelBtn">Cancelar</button>
         <button class="btn-save" id="saveBtn">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="actionOverlay">
+    <div class="modal-sheet">
+      <h2 id="actionTitle">Gasto</h2>
+      <div class="action-detail" id="actionDetail"></div>
+      <div class="action-list">
+        <button type="button" class="act-edit" id="actEdit">Editar</button>
+        <button type="button" class="act-delete" id="actDelete">Eliminar</button>
+        <button type="button" class="act-cancel" id="actCancel">Cancelar</button>
       </div>
     </div>
   </div>
@@ -885,7 +893,8 @@ function applyOutboxLocally() {
   outbox.forEach(op => {
     const p = op.payload;
     if (op.action === "add") {
-      if (!movimientos.some(m => sameId(m.id, p.movimiento.id))) movimientos.push(p.movimiento);
+      movimientos = movimientos.filter(m => !sameId(m.id, p.movimiento.id));
+      movimientos.push(p.movimiento);
     } else if (op.action === "delete") {
       movimientos = movimientos.filter(m => !sameId(m.id, p.id));
     } else if (op.action === "config_add") {
@@ -928,14 +937,6 @@ async function flushOutbox() {
 
 let syncProblem = "";
 let fetchSeq = 0;
-
-function setSheetStatus(text) {
-  const status = document.getElementById("sheetStatus");
-  if (!status) return;
-  if (!text) { status.style.display = "none"; return; }
-  status.style.display = "block";
-  status.textContent = text;
-}
 
 // Lee todo (movimientos + listas configurables) desde la planilla.
 async function fetchAllFromSheet() {
@@ -1037,6 +1038,9 @@ function renderSyncState() {
 }
 
 function renderEverything() {
+  // Si el formulario esta abierto, lo elegido se mantiene aunque se vuelvan
+  // a armar las listas al releer la planilla.
+  const keep = ["fProvider", "fClient", "fUnit", "fPayment"].map(id => [id, document.getElementById(id).value]);
   render();
   renderSyncState();
   renderConfig();
@@ -1048,29 +1052,7 @@ function renderEverything() {
   fillClientSelect();
   fillUnitSelect();
   fillPaymentSelect();
-}
-
-// Guarda un archivo generado por la app (backup). Si la pagina corre
-// dentro de Claude con el permiso de descargas, lo usa; si no (por
-// ejemplo alojada como pagina comun), usa el metodo clasico del navegador.
-async function saveFile(filename, text, mime) {
-  try {
-    if (window.claude && window.claude.use) {
-      const dl = await window.claude.use("downloads");
-      if (dl) { await dl.save({ filename: filename, data: text }); return; }
-    }
-  } catch (e) {
-    console.error("No se pudo guardar via Claude, uso metodo del navegador", e);
-  }
-  const blob = new Blob([text], { type: mime || "application/octet-stream" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  keep.forEach(([id, value]) => { if (value) setSelectValue(id, value); });
 }
 
 const MONTHS = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
@@ -1277,7 +1259,44 @@ function removeCategory(type, name) {
 }
 
 function fmt(n) {
-  return "$" + Math.round(n).toLocaleString("es-AR");
+  const v = Math.round(n * 100) / 100;
+  const dec = Math.abs(v % 1) > 0.0001 ? 2 : 0;
+  return (v < 0 ? "-$" : "$") + Math.abs(v).toLocaleString("es-AR", { minimumFractionDigits: dec, maximumFractionDigits: 2 });
+}
+
+// Numeros con formato argentino: punto para miles y coma para decimales.
+function fmtNum(n, maxDec) {
+  return Number(n).toLocaleString("es-AR", { maximumFractionDigits: maxDec });
+}
+
+function parseNum(str) {
+  const clean = String(str || "").replace(/\./g, "").replace(",", ".");
+  return clean ? parseFloat(clean) : NaN;
+}
+
+// Mientras se escribe, pone los puntos de miles y deja una sola coma.
+// Si el teclado del celular solo tiene punto, el punto se toma como coma.
+function formatNumberInput(el, e, maxDec) {
+  let value = el.value;
+  let caret = el.selectionStart;
+  if (e && e.data === "." && !value.slice(0, caret - 1).includes(",") && !value.slice(caret).includes(",")) {
+    value = value.slice(0, caret - 1) + "," + value.slice(caret);
+  }
+  const before = value.slice(0, caret).replace(/[^\d,]/g, "").length;
+  const clean = value.replace(/[^\d,]/g, "");
+  const comma = clean.indexOf(",");
+  let intPart = comma >= 0 ? clean.slice(0, comma) : clean;
+  const decPart = comma >= 0 ? clean.slice(comma + 1).replace(/,/g, "").slice(0, maxDec) : null;
+  intPart = intPart.replace(/^0+(?=\d)/, "");
+  if (decPart !== null && intPart === "") intPart = "0";
+  const out = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".") + (decPart !== null ? "," + decPart : "");
+  el.value = out;
+  let pos = 0, count = 0;
+  while (pos < out.length && count < before) {
+    if (/[\d,]/.test(out[pos])) count++;
+    pos++;
+  }
+  try { el.setSelectionRange(pos, pos); } catch (err) {}
 }
 
 function todayStr() {
@@ -1289,7 +1308,6 @@ async function loadData() {
   loadLocalCache();
   storageReady = true;
   renderEverything();
-  document.getElementById("sheetUrlInput").value = sheetUrl;
   document.getElementById("phoneOwner").value = phoneOwner || "preguntar";
   if (!phoneOwner) document.getElementById("whoOverlay").classList.add("open");
   await syncNow();
@@ -1337,7 +1355,7 @@ function moveItemHtml(m) {
   const provider = m.provider ? '<div class="note">Proveedor: ' + escapeHtml(m.provider) + '</div>' : "";
   const client = m.client ? '<div class="note">Cliente: ' + escapeHtml(m.client) + '</div>' : "";
   const invoice = m.invoice ? '<div class="note">Factura: ' + escapeHtml(m.invoice) + '</div>' : "";
-  const quantity = m.quantity ? '<div class="note">Cantidad: ' + m.quantity + (m.unit ? " " + escapeHtml(m.unit) : "") + '</div>' : "";
+  const quantity = m.quantity ? '<div class="note">Cantidad: ' + fmtNum(m.quantity, 3) + (m.unit ? " " + escapeHtml(m.unit) : "") + '</div>' : "";
   const paymentLabelText = m.type === "gasto" ? "Forma de pago: " : "Forma de cobro: ";
   const payment = m.payment ? '<div class="note">' + paymentLabelText + escapeHtml(m.payment) + '</div>' : "";
   return '<div class="move-item" data-id="' + m.id + '">' +
@@ -1348,7 +1366,9 @@ function moveItemHtml(m) {
     '</div>' +
     '<div class="right">' +
       '<div class="amt ' + cls + '">' + sign + fmt(m.amount) + '</div>' +
-      '<button class="del-btn" data-del="' + m.id + '" aria-label="Eliminar">&times;</button>' +
+      '<button class="edit-btn" data-edit="' + escapeHtml(String(m.id)) + '" aria-label="Editar o eliminar">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>' +
+      '</button>' +
     '</div>' +
   '</div>';
 }
@@ -1383,22 +1403,58 @@ function renderList(containerId, list, limit) {
     html += '</div>';
   });
   container.innerHTML = html;
-  container.querySelectorAll(".del-btn").forEach(btn => {
+  container.querySelectorAll(".edit-btn").forEach(btn => {
     btn.addEventListener("click", (e) => {
       e.stopPropagation();
-      const id = btn.getAttribute("data-del");
-      const m = movimientos.find(x => sameId(x.id, id));
-      if (!m) return;
-      const tipo = m.type === "ingreso" ? "ingreso" : "gasto";
-      const detalle = m.category + " — " + fmt(m.amount) + " — " + dayLabel(m.date);
-      if (!confirm("¿Estás seguro de que querés eliminar este " + tipo + "?\n\n" + detalle + "\n\nSe borra también de la planilla y de los otros celulares.")) return;
-      movimientos = movimientos.filter(x => x !== m);
-      saveLocalCache();
-      render();
-      queueChange("delete", { type: m.type, id: m.id });
+      openActions(btn.getAttribute("data-edit"));
     });
   });
 }
+
+// Lapiz de cada movimiento: primero pregunta si editar o eliminar.
+let actionId = null;
+
+function movementDetail(m) {
+  return m.category + " — " + fmt(m.amount) + " — " + dayLabel(m.date);
+}
+
+function openActions(id) {
+  const m = movimientos.find(x => sameId(x.id, id));
+  if (!m) return;
+  actionId = m.id;
+  document.getElementById("actionTitle").textContent = m.type === "ingreso" ? "Ingreso" : "Gasto";
+  document.getElementById("actionDetail").textContent = movementDetail(m) + (m.person ? " — cargado por " + m.person : "");
+  document.getElementById("actionOverlay").classList.add("open");
+}
+
+function closeActions() {
+  document.getElementById("actionOverlay").classList.remove("open");
+  actionId = null;
+}
+
+function deleteMovement(m) {
+  const tipo = m.type === "ingreso" ? "ingreso" : "gasto";
+  if (!confirm("¿Estás seguro de que querés eliminar este " + tipo + "?\n\n" + movementDetail(m) + "\n\nSe borra también de la planilla y de los otros celulares.")) return;
+  movimientos = movimientos.filter(x => x !== m);
+  saveLocalCache();
+  render();
+  queueChange("delete", { type: m.type, id: m.id });
+}
+
+document.getElementById("actEdit").addEventListener("click", () => {
+  const m = movimientos.find(x => sameId(x.id, actionId));
+  closeActions();
+  if (m) openModal(m.type, m);
+});
+document.getElementById("actDelete").addEventListener("click", () => {
+  const m = movimientos.find(x => sameId(x.id, actionId));
+  closeActions();
+  if (m) deleteMovement(m);
+});
+document.getElementById("actCancel").addEventListener("click", closeActions);
+document.getElementById("actionOverlay").addEventListener("click", (e) => {
+  if (e.target.id === "actionOverlay") closeActions();
+});
 
 function renderSummary(list) {
   const container = document.getElementById("summaryList");
@@ -1539,7 +1595,10 @@ document.querySelectorAll(".tab-btn").forEach(btn => {
     document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
     document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
     btn.classList.add("active");
-    document.getElementById("tab-" + btn.getAttribute("data-tab")).classList.add("active");
+    const tab = btn.getAttribute("data-tab");
+    document.getElementById("tab-" + tab).classList.add("active");
+    // Config no depende del mes: ahi no se muestra el selector de mes.
+    document.querySelector(".month-nav").style.display = tab === "config" ? "none" : "flex";
   });
 });
 
@@ -1548,11 +1607,40 @@ function fillCategorySelect(type) {
   sel.innerHTML = CATS[type].map(c => '<option value="' + c + '">' + c + '</option>').join("");
 }
 
-function openModal(type) {
+// Unidad usada la ultima vez con esa categoria (sale de lo ya cargado,
+// asi vale en todos los celulares).
+function lastUnitFor(type, category) {
+  let best = null;
+  movimientos.forEach(m => {
+    if (m.type !== type || m.category !== category || !m.unit) return;
+    if (!best || m.date > best.date || (m.date === best.date && Number(m.id) > Number(best.id))) best = m;
+  });
+  return best ? best.unit : "";
+}
+
+// Pone un valor en una lista; si ya no existe en la lista (por ejemplo un
+// proveedor que se borro de Config), lo agrega para no perderlo al editar.
+function setSelectValue(id, value) {
+  const sel = document.getElementById(id);
+  if (value && !Array.from(sel.options).some(o => o.value === value)) {
+    const opt = document.createElement("option");
+    opt.value = value;
+    opt.textContent = value;
+    sel.appendChild(opt);
+  }
+  sel.value = value || "";
+}
+
+let editingMove = null;
+
+function openModal(type, move) {
   modalType = type;
+  editingMove = move || null;
   const title = document.getElementById("modalTitle");
   const saveBtn = document.getElementById("saveBtn");
-  title.textContent = type === "ingreso" ? "Nuevo ingreso" : "Nuevo gasto";
+  if (editingMove) title.textContent = type === "ingreso" ? "Editar ingreso" : "Editar gasto";
+  else title.textContent = type === "ingreso" ? "Nuevo ingreso" : "Nuevo gasto";
+  saveBtn.textContent = editingMove ? "Guardar cambios" : "Guardar";
   title.className = type;
   saveBtn.className = "btn-save " + (type === "ingreso" ? "in" : "out");
   fillCategorySelect(type);
@@ -1574,18 +1662,46 @@ function openModal(type) {
   document.getElementById("gastoExtraA").style.display = type === "gasto" ? "block" : "none";
   document.getElementById("gastoExtraB").style.display = type === "gasto" ? "block" : "none";
   document.getElementById("formErr").style.display = "none";
-  const fixed = PEOPLE.includes(phoneOwner);
-  document.getElementById("personField").style.display = fixed ? "none" : "block";
   const personFixed = document.getElementById("personFixed");
-  personFixed.style.display = fixed ? "block" : "none";
-  personFixed.textContent = fixed ? "Lo carga " + phoneOwner + " (se cambia en Config)." : "";
-  selectPerson(fixed ? phoneOwner : "");
+  if (editingMove) {
+    // Al editar se conserva quien lo cargo originalmente.
+    const m = editingMove;
+    setSelectValue("fCategory", m.category);
+    setSelectValue("fProvider", m.provider);
+    setSelectValue("fClient", m.client);
+    setSelectValue("fUnit", m.unit);
+    setSelectValue("fPayment", m.payment);
+    document.getElementById("fAmount").value = fmtNum(m.amount, 2);
+    document.getElementById("fQuantity").value = m.quantity ? fmtNum(m.quantity, 3) : "";
+    document.getElementById("fDate").value = m.date;
+    document.getElementById("fNote").value = m.note || "";
+    document.getElementById("fInvoice").value = m.invoice || "";
+    document.getElementById("personField").style.display = "none";
+    personFixed.style.display = "block";
+    personFixed.textContent = "Cargado por " + (m.person || "—") + ".";
+    selectPerson(m.person || "");
+  } else {
+    document.getElementById("fUnit").value = lastUnitFor(type, document.getElementById("fCategory").value);
+    const fixed = PEOPLE.includes(phoneOwner);
+    document.getElementById("personField").style.display = fixed ? "none" : "block";
+    personFixed.style.display = fixed ? "block" : "none";
+    personFixed.textContent = fixed ? "Lo carga " + phoneOwner + " (se cambia en Config)." : "";
+    selectPerson(fixed ? phoneOwner : "");
+  }
   document.getElementById("modalOverlay").classList.add("open");
 }
 
 function closeModal() {
   document.getElementById("modalOverlay").classList.remove("open");
+  editingMove = null;
 }
+
+document.getElementById("fCategory").addEventListener("change", (e) => {
+  const unit = lastUnitFor(modalType, e.target.value);
+  if (unit) setSelectValue("fUnit", unit);
+});
+document.getElementById("fAmount").addEventListener("input", (e) => formatNumberInput(e.target, e, 2));
+document.getElementById("fQuantity").addEventListener("input", (e) => formatNumberInput(e.target, e, 3));
 
 function selectPerson(p) {
   selectedPerson = p;
@@ -1675,32 +1791,6 @@ document.querySelectorAll(".accordion-header").forEach(header => {
   });
 });
 
-document.getElementById("saveSheetUrl").addEventListener("click", () => {
-  const url = document.getElementById("sheetUrlInput").value.trim();
-  if (!isSheetUrl(url)) {
-    setSheetStatus("Esa dirección no es de Apps Script. Tiene que empezar con https://script.google.com/ y terminar en /exec.");
-    return;
-  }
-  sheetUrl = url;
-  try { localStorage.setItem(SHEET_URL_KEY, sheetUrl); } catch (e) {}
-  setSheetStatus("Listo, conectando con la planilla…");
-  renderSyncState();
-  syncNow();
-});
-
-document.getElementById("downloadBackup").addEventListener("click", () => {
-  const backup = {
-    exportadoEl: new Date().toISOString(),
-    movimientos: movimientos,
-    categorias: CATS,
-    proveedores: PROVIDERS,
-    clientes: CLIENTS,
-    unidades: UNITS,
-    formasPago: PAYMENT_METHODS
-  };
-  saveFile("la-emilia-backup-" + todayStr() + ".json", JSON.stringify(backup, null, 2), "application/json");
-});
-
 document.getElementById("openIncome").addEventListener("click", () => openModal("ingreso"));
 document.getElementById("openExpense").addEventListener("click", () => openModal("gasto"));
 document.getElementById("cancelBtn").addEventListener("click", closeModal);
@@ -1711,7 +1801,7 @@ document.getElementById("modalOverlay").addEventListener("click", (e) => {
 document.getElementById("saveBtn").addEventListener("click", async () => {
   const amountVal = document.getElementById("fAmount").value;
   const errEl = document.getElementById("formErr");
-  const amount = parseFloat(amountVal);
+  const amount = parseNum(amountVal);
   if (!amountVal || isNaN(amount) || amount <= 0) {
     errEl.textContent = "Ingresá un monto válido para continuar.";
     errEl.style.display = "block";
@@ -1729,8 +1819,9 @@ document.getElementById("saveBtn").addEventListener("click", async () => {
     return;
   }
   errEl.style.display = "none";
+  const quantityVal = parseNum(document.getElementById("fQuantity").value);
   const entry = {
-    id: String(Date.now()),
+    id: editingMove ? editingMove.id : String(Date.now()),
     type: modalType,
     category: document.getElementById("fCategory").value,
     amount: amount,
@@ -1740,14 +1831,19 @@ document.getElementById("saveBtn").addEventListener("click", async () => {
     client: modalType === "ingreso" ? document.getElementById("fClient").value.trim() : "",
     invoice: modalType === "gasto" ? document.getElementById("fInvoice").value.trim() : "",
     provider: modalType === "gasto" ? document.getElementById("fProvider").value.trim() : "",
-    quantity: document.getElementById("fQuantity").value ? parseFloat(document.getElementById("fQuantity").value) : null,
+    quantity: isNaN(quantityVal) ? null : quantityVal,
     unit: document.getElementById("fUnit").value.trim(),
     payment: document.getElementById("fPayment").value.trim()
   };
+  // Editar = borrar la version vieja y agregar la nueva con el mismo ID.
+  // Asi funciona con el Apps Script actual y no se duplica.
+  const old = editingMove;
+  movimientos = movimientos.filter(m => !old || !sameId(m.id, old.id));
   movimientos.push(entry);
   saveLocalCache();
   closeModal();
   render();
+  if (old) queueChange("delete", { type: old.type, id: old.id });
   queueChange("add", { movimiento: entry });
 });
 

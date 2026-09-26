@@ -84,6 +84,13 @@ pasos es mejor.
   dirección `/exec`, y nunca se guardan en el repo.
 - Listas configurables: categorías de ingreso y gasto, clientes, proveedores,
   unidades y formas de pago.
+- **Editar** un movimiento = en la cola, `delete` de la versión vieja + `add`
+  de la nueva con el mismo ID (funciona con el Apps Script actual, sin
+  duplicar). Se conserva la persona que lo cargó originalmente.
+- La unidad se precarga con la última usada para esa categoría, sacada de los
+  movimientos ya cargados (vale para todos los celulares).
+- Monto y cantidad se escriben en formato argentino (`100.006,29`); se
+  guardan como número. El monto admite 2 decimales y la cantidad 3.
 
 ## Reglas firmes
 
@@ -103,8 +110,11 @@ pasos es mejor.
   ya están guardados en la planilla (por ejemplo la categoría "Insumos
   agricolas") no se renombran desde el código, porque dejarían huérfanos a los
   movimientos viejos.
-- **Borrar un movimiento siempre pide confirmación** ("¿Estás seguro…?",
-  mostrando categoría, monto y fecha).
+- Cada movimiento tiene un **lápiz** que pregunta Editar / Eliminar / Cancelar.
+  **Borrar siempre pide confirmación** ("¿Estás seguro…?", mostrando
+  categoría, monto y fecha).
+- Al releer la planilla no se puede pisar lo que la persona está eligiendo en
+  el formulario abierto.
 - Ninguna sincronización puede borrar gastos de la app ni de la planilla en
   forma masiva. Lo que carga Daniel tiene que aparecerle a Ignacio y en la
   planilla, y viceversa.
@@ -120,3 +130,10 @@ pasos es mejor.
   quedaron `daniel`/`javier` (antes `hermano`/`padre` estaban invertidos).
 - Se agregó a Ignacio como persona que carga y se sacaron de Config los botones
   para compartir links de instalación.
+- Lápiz para editar/eliminar, unidad recordada por categoría, monto y cantidad
+  con coma y puntos, arreglo de campos que se borraban al cargar. En Config se
+  ocultaron el cambio de mes, "vincular a mano" y la copia de seguridad (la
+  planilla ya guarda todo).
+- Pendiente (Ignacio pidió esperar): gasoil/nafta al cargar Combustible.
+  Opciones charladas: campo aparte (requiere columna nueva en el Apps Script)
+  o dos categorías "Combustible – Gasoil" / "Combustible – Nafta".
