@@ -134,6 +134,11 @@ pasos es mejor.
   con coma y puntos, arreglo de campos que se borraban al cargar. En Config se
   ocultaron el cambio de mes, "vincular a mano" y la copia de seguridad (la
   planilla ya guarda todo).
+- E-cheqs (opción A elegida por Ignacio): se cargan como gasto con la **fecha
+  de débito** y forma de pago "E-cheq". Todo movimiento con fecha posterior a
+  hoy se muestra con borde punteado y etiqueta "A debitar" (gastos) o "A
+  cobrar" (ingresos). Se descartó guardar la fecha de compra aparte (opción B,
+  requería columna nueva). `todayStr()` usa la fecha local del celular.
 - Pendiente (Ignacio pidió esperar): gasoil/nafta al cargar Combustible.
   Opciones charladas: campo aparte (requiere columna nueva en el Apps Script)
   o dos categorías "Combustible – Gasoil" / "Combustible – Nafta".
