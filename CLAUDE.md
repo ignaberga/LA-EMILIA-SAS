@@ -139,6 +139,10 @@ pasos es mejor.
   hoy se muestra con borde punteado y etiqueta "A debitar" (gastos) o "A
   cobrar" (ingresos). Se descartó guardar la fecha de compra aparte (opción B,
   requería columna nueva). `todayStr()` usa la fecha local del celular.
+- Historial con filtros opción B: botones rápidos de tipo y persona, listas
+  de categoría, forma de pago y proveedor/cliente, y "Limpiar filtros".
+  Proveedores, clientes y listas de filtros van en orden alfabético
+  (`sortAlpha`, sin distinguir mayúsculas ni tildes).
 - Pendiente (Ignacio pidió esperar): gasoil/nafta al cargar Combustible.
   Opciones charladas: campo aparte (requiere columna nueva en el Apps Script)
   o dos categorías "Combustible – Gasoil" / "Combustible – Nafta".

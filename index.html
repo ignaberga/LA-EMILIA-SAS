@@ -436,21 +436,28 @@
   }
   .help-text { font-size: 13px; color: var(--ink-soft); margin-bottom: 12px; line-height: 1.4; }
   .who-modal .person-toggle { flex-direction: column; }
-  .hist-filters {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    padding: 0 20px 16px;
+  .hist-filters { padding: 0 20px 16px; display: flex; flex-direction: column; gap: 10px; }
+  .chip-row { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chip {
+    padding: 8px 14px; border-radius: 20px; border: 1px solid var(--line);
+    background: var(--surface); color: var(--ink-soft);
+    font-size: 13px; font-weight: 600; font-family: inherit;
   }
-  .hist-filters select {
-    padding: 10px 10px;
-    border-radius: 10px;
-    border: 1px solid var(--line);
-    font-size: 13px;
-    background: var(--surface);
-    color: var(--ink);
-    font-family: inherit;
+  .chip.sel { background: var(--pine); border-color: var(--pine); color: #fff; }
+  .filter-selects { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .filter-selects .wide { grid-column: 1 / -1; }
+  .filter-selects label { display: block; font-size: 11px; font-weight: 600; color: var(--ink-soft); margin: 0 0 4px 2px; }
+  .filter-selects select {
+    width: 100%; padding: 10px; border-radius: 10px; border: 1px solid var(--line);
+    font-size: 13px; background: var(--surface); color: var(--ink); font-family: inherit;
   }
+  .filter-selects select.active { border-color: var(--pine); color: var(--pine-dark); font-weight: 600; }
+  .clear-filters {
+    align-self: flex-end; border: none; background: none; padding: 2px 4px;
+    color: var(--rust); font-size: 13px; font-weight: 700; font-family: inherit;
+    display: none;
+  }
+  .clear-filters.show { display: block; }
 </style>
 </head>
 <body>
@@ -497,23 +504,32 @@
 
   <div id="tab-historial" class="tab-panel">
     <div class="hist-filters">
-      <select id="filterType">
-        <option value="">Ingresos y gastos</option>
-        <option value="ingreso">Solo ingresos</option>
-        <option value="gasto">Solo gastos</option>
-      </select>
-      <select id="filterCategory">
-        <option value="">Todas las categorías</option>
-      </select>
-      <select id="filterPartner">
-        <option value="">Todos los proveedores/clientes</option>
-      </select>
-      <select id="filterPerson">
-        <option value="">Todas las personas</option>
-        <option value="Daniel">Solo Daniel</option>
-        <option value="Javier">Solo Javier</option>
-        <option value="Ignacio">Solo Ignacio</option>
-      </select>
+      <div class="chip-row" id="chipsType">
+        <button type="button" class="chip" data-value="">Todos</button>
+        <button type="button" class="chip" data-value="ingreso">Ingresos</button>
+        <button type="button" class="chip" data-value="gasto">Gastos</button>
+      </div>
+      <div class="chip-row" id="chipsPerson">
+        <button type="button" class="chip" data-value="">Todas</button>
+        <button type="button" class="chip" data-value="Daniel">Daniel</button>
+        <button type="button" class="chip" data-value="Javier">Javier</button>
+        <button type="button" class="chip" data-value="Ignacio">Ignacio</button>
+      </div>
+      <div class="filter-selects">
+        <div>
+          <label for="filterCategory">Categoría</label>
+          <select id="filterCategory"></select>
+        </div>
+        <div>
+          <label for="filterPayment">Forma de pago</label>
+          <select id="filterPayment"></select>
+        </div>
+        <div class="wide">
+          <label for="filterPartner" id="filterPartnerLabel">Proveedor / cliente</label>
+          <select id="filterPartner"></select>
+        </div>
+      </div>
+      <button type="button" class="clear-filters" id="clearFilters">Limpiar filtros ✕</button>
     </div>
     <div class="balance-card" style="margin:0 20px 16px;">
       <div class="label">Total filtrado (<span id="histCount">0</span> movimientos)</div>
@@ -747,6 +763,11 @@ let CATS = { ingreso: [...DEFAULT_CATS.ingreso], gasto: [...DEFAULT_CATS.gasto] 
 const DEFAULT_UNITS = ["Litros", "Kilogramos", "Bolsas", "Unidades"];
 let UNITS = [...DEFAULT_UNITS];
 let PROVIDERS = [];
+
+// Orden alfabetico sin importar mayusculas ni tildes (la ñ va despues de la n).
+function sortAlpha(list) {
+  return list.slice().sort((a, b) => String(a).localeCompare(String(b), "es", { sensitivity: "base" }));
+}
 const DEFAULT_PAYMENTS = ["Efectivo", "Transferencia", "Cheque", "E-cheq"];
 let PAYMENT_METHODS = [...DEFAULT_PAYMENTS];
 let CLIENTS = [];
@@ -1134,7 +1155,7 @@ function fillClientSelect() {
     return;
   }
   sel.innerHTML = '<option value="">Sin especificar</option>' +
-    CLIENTS.map(c => '<option value="' + escapeHtml(c) + '">' + escapeHtml(c) + '</option>').join("");
+    sortAlpha(CLIENTS).map(c => '<option value="' + escapeHtml(c) + '">' + escapeHtml(c) + '</option>').join("");
 }
 
 function renderUnitConfig() {
@@ -1168,7 +1189,7 @@ function fillProviderSelect() {
     return;
   }
   sel.innerHTML = '<option value="">Sin especificar</option>' +
-    PROVIDERS.map(p => '<option value="' + escapeHtml(p) + '">' + escapeHtml(p) + '</option>').join("");
+    sortAlpha(PROVIDERS).map(p => '<option value="' + escapeHtml(p) + '">' + escapeHtml(p) + '</option>').join("");
 }
 
 function fillUnitSelect() {
@@ -1525,6 +1546,7 @@ let filterType = "";
 let filterCategory = "";
 let filterPartner = "";
 let filterPerson = "";
+let filterPayment = "";
 
 function getFilteredHistorial() {
   let list = filteredForMonth();
@@ -1532,24 +1554,44 @@ function getFilteredHistorial() {
   if (filterCategory) list = list.filter(m => m.category === filterCategory);
   if (filterPartner) list = list.filter(m => m.provider === filterPartner || m.client === filterPartner);
   if (filterPerson) list = list.filter(m => m.person === filterPerson);
+  if (filterPayment) list = list.filter(m => m.payment === filterPayment);
   return list;
 }
 
+// Arma una lista de filtro: lo configurado mas lo que aparece en movimientos
+// ya cargados (por si algo se borro de Config), ordenado alfabeticamente.
+function fillFilterSelect(id, allLabel, values, current) {
+  const sel = document.getElementById(id);
+  const items = sortAlpha(Array.from(new Set(values.filter(v => v))));
+  sel.innerHTML = '<option value="">' + allLabel + '</option>' +
+    items.map(v => '<option value="' + escapeHtml(v) + '">' + escapeHtml(v) + '</option>').join("");
+  const value = items.includes(current) ? current : "";
+  sel.value = value;
+  sel.classList.toggle("active", !!value);
+  return value;
+}
+
 function renderHistorialFilterOptions() {
-  const catSel = document.getElementById("filterCategory");
+  const ofType = () => movimientos.filter(m => !filterType || m.type === filterType);
   let cats;
   if (filterType === "ingreso") cats = CATS.ingreso;
   else if (filterType === "gasto") cats = CATS.gasto;
-  else cats = Array.from(new Set([...CATS.ingreso, ...CATS.gasto]));
-  catSel.innerHTML = '<option value="">Todas las categorías</option>' +
-    cats.map(c => '<option value="' + escapeHtml(c) + '"' + (c === filterCategory ? " selected" : "") + '>' + escapeHtml(c) + '</option>').join("");
-  if (!cats.includes(filterCategory)) filterCategory = "";
+  else cats = CATS.ingreso.concat(CATS.gasto);
+  filterCategory = fillFilterSelect("filterCategory", "Todas", cats.concat(ofType().map(m => m.category)), filterCategory);
 
-  const partnerSel = document.getElementById("filterPartner");
-  const partners = Array.from(new Set([...PROVIDERS, ...CLIENTS]));
-  partnerSel.innerHTML = '<option value="">Todos los proveedores/clientes</option>' +
-    partners.map(p => '<option value="' + escapeHtml(p) + '"' + (p === filterPartner ? " selected" : "") + '>' + escapeHtml(p) + '</option>').join("");
-  if (!partners.includes(filterPartner)) filterPartner = "";
+  filterPayment = fillFilterSelect("filterPayment", "Todas", PAYMENT_METHODS.concat(ofType().map(m => m.payment)), filterPayment);
+
+  let partners, label;
+  if (filterType === "gasto") { partners = PROVIDERS.concat(ofType().map(m => m.provider)); label = "Proveedor"; }
+  else if (filterType === "ingreso") { partners = CLIENTS.concat(ofType().map(m => m.client)); label = "Cliente"; }
+  else { partners = PROVIDERS.concat(CLIENTS, movimientos.map(m => m.provider), movimientos.map(m => m.client)); label = "Proveedor / cliente"; }
+  document.getElementById("filterPartnerLabel").textContent = label;
+  filterPartner = fillFilterSelect("filterPartner", "Todos", partners, filterPartner);
+
+  document.querySelectorAll("#chipsType .chip").forEach(c => c.classList.toggle("sel", c.getAttribute("data-value") === filterType));
+  document.querySelectorAll("#chipsPerson .chip").forEach(c => c.classList.toggle("sel", c.getAttribute("data-value") === filterPerson));
+  const any = filterType || filterPerson || filterCategory || filterPartner || filterPayment;
+  document.getElementById("clearFilters").classList.toggle("show", !!any);
 }
 
 function renderHistorialTotals(list) {
@@ -1571,10 +1613,17 @@ function renderHistorial() {
   renderList("historyList", list, null);
 }
 
-document.getElementById("filterType").addEventListener("change", (e) => {
-  filterType = e.target.value;
-  filterCategory = "";
-  renderHistorial();
+document.querySelectorAll("#chipsType .chip").forEach(chip => {
+  chip.addEventListener("click", () => {
+    filterType = chip.getAttribute("data-value");
+    renderHistorial();
+  });
+});
+document.querySelectorAll("#chipsPerson .chip").forEach(chip => {
+  chip.addEventListener("click", () => {
+    filterPerson = chip.getAttribute("data-value");
+    renderHistorial();
+  });
 });
 document.getElementById("filterCategory").addEventListener("change", (e) => {
   filterCategory = e.target.value;
@@ -1584,8 +1633,12 @@ document.getElementById("filterPartner").addEventListener("change", (e) => {
   filterPartner = e.target.value;
   renderHistorial();
 });
-document.getElementById("filterPerson").addEventListener("change", (e) => {
-  filterPerson = e.target.value;
+document.getElementById("filterPayment").addEventListener("change", (e) => {
+  filterPayment = e.target.value;
+  renderHistorial();
+});
+document.getElementById("clearFilters").addEventListener("click", () => {
+  filterType = filterPerson = filterCategory = filterPartner = filterPayment = "";
   renderHistorial();
 });
 
